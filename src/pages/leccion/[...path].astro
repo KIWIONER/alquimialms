@@ -1,0 +1,213 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import ChatSidebar from '../../components/ChatSidebar';
+import LessonContentViewer from '../../components/LessonContentViewer';
+import { getLibraryStructure } from '../../lib/books';
+import { supabase } from '../../lib/supabase';
+
+export const prerender = false;
+
+export const getStaticPaths = async () => {
+    const modules = await getLibraryStructure();
+    const paths = [];
+
+    for (const mod of modules) {
+        // Unidades
+        for (const unit of mod.units) {
+            paths.push({
+                params: { path: `${mod.id}/${unit.slug}` }
+            });
+        }
+        // Inicio del módulo
+        paths.push({
+            params: { path: `${mod.id}/inicio` }
+        });
+    }
+    return paths;
+};
+
+const { path } = Astro.params;
+const pathParts = path?.split('/') || [];
+const moduleCode = pathParts[0]?.toLowerCase() || '';
+const unitSlug = pathParts[1]?.toLowerCase() || '';
+
+const structure = await getLibraryStructure();
+const activeModule = structure.find(m => m.id.toLowerCase() === moduleCode);
+
+// Redirección para inicio
+if (unitSlug === 'inicio' && activeModule && activeModule.units.length > 0) {
+    return Astro.redirect(`/leccion/${activeModule.id}/${activeModule.units[0].slug}`);
+}
+
+// Búsqueda robusta por slug
+const activeUnit = activeModule?.units.find(u => u.slug === unitSlug);
+
+// Fallback por nombre (enlaces antiguos)
+const fallbackUnit = !activeUnit ? activeModule?.units.find(u => 
+    u.nombre.toLowerCase().replace(/\.(pdf|PDF|docx|DOCX)$/, "").trim() === unitSlug
+) : null;
+
+const finalUnit = activeUnit || fallbackUnit;
+const pdfUrl = finalUnit?.url;
+const unitNombre = finalUnit?.nombre || unitSlug;
+
+// 1. QUERY A SUPABASE
+let docId = null;
+if (finalUnit) {
+    const { data, error } = await supabase
+      .schema('nutricionista')
+      .from('documentos')
+      .select('id')
+      .eq('nombre', finalUnit.nombre)
+      .eq('carpeta', finalUnit.carpeta)
+      .single();
+
+    if (data) {
+        docId = data.id;
+    }
+}
+
+// Nombre del módulo derivado dinámicamente de la estructura de la DB
+const moduleDisplayName = activeModule?.name || moduleCode.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+
+const title = `${unitNombre.replace(/\.(pdf|PDF|docx|DOCX)$/, '')} | Alquimia`;
+---
+
+<Layout title={title}>
+    <div class="flex flex-col h-full bg-slate-50">
+        <nav class="flex items-center justify-between px-6 py-3 border-b border-slate-200 bg-white/80 backdrop-blur-sm z-10 shrink-0">
+            <div class="flex items-center gap-2 text-xs text-slate-500">
+                <a href="/biblioteca" class="hover:text-medical-green-600 transition-colors">Biblioteca</a>
+                <span>/</span>
+                <span class="font-medium text-slate-700">{moduleDisplayName}</span>
+                <span>/</span>
+                <span class="text-medical-green-600 font-bold bg-medical-green-50 px-2 py-0.5 rounded-full">
+                    {unitNombre.replace(/\.(pdf|PDF|docx|DOCX)$/, '')}
+                </span>
+            </div>
+
+            {/* Selectores eliminados por petición del usuario para una vista más limpia */}
+            <div class="hidden md:flex items-center" id="view-selector">
+                <!-- Los botones de PDF/Texto/Dividida han sido eliminados -->
+            </div>
+
+            <div class="flex items-center gap-3">
+                 {pdfUrl && (
+                    <a href={pdfUrl} target="_blank" class="text-[10px] font-bold text-slate-400 hover:text-medical-green-600 transition-colors flex items-center gap-1.5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                        NUEVA PESTAÑA
+                    </a>
+                 )}
+            </div>
+        </nav>
+
+        <div class="flex-1 flex flex-col md:flex-row overflow-hidden bg-slate-100/30">
+            {docId ? (
+                <LessonContentViewer 
+                    client:load 
+                    docId={docId} 
+                    unitName={unitNombre.replace(/\.(pdf|PDF|docx|DOCX)$/, '')}
+                    moduleName={moduleDisplayName}
+                />
+            ) : (
+                <div class="flex-1 flex flex-col items-center justify-center p-12 text-slate-400 space-y-5 text-center bg-white">
+                    <div class="w-16 h-16 bg-medical-green-50 rounded-2xl flex items-center justify-center mb-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-medical-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-600 border-none pb-0 mt-0">Contenido en Proceso</h3>
+                    <p class="text-sm max-w-xs leading-relaxed">El texto procesado para esta unidad aún no está disponible.</p>
+                    {pdfUrl && (
+                        <a href={pdfUrl} target="_blank" class="btn-medical text-[10px] py-2 px-6 bg-slate-800 shadow-lg mt-4">Abrir PDF Original</a>
+                    )}
+                </div>
+            )}
+        </div>
+
+        <footer class="h-16 border-t border-slate-200 bg-white px-6 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-6">
+                 <a href="/biblioteca" class="flex items-center gap-2 group text-slate-400 hover:text-slate-800 transition-all">
+                    <div class="w-8 h-8 rounded-lg border border-slate-100 flex items-center justify-center group-hover:bg-slate-50">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </div>
+                    <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Biblioteca</span>
+                </a>
+            </div>
+
+            <div class="flex items-center gap-4">
+                 <button 
+                    id="mark-read-btn"
+                    data-slug={finalUnit?.slug}
+                    data-is-read={finalUnit?.completado ? 'true' : 'false'}
+                    class={`btn-medical text-xs py-3 px-8 flex items-center gap-3 transition-all duration-300 font-bold tracking-tight rounded-xl shadow-lg ${
+                        finalUnit?.completado 
+                            ? 'bg-medical-green-600 text-white shadow-medical-green-600/20 border-medical-green-500' 
+                            : 'bg-white text-slate-500 hover:text-slate-800 hover:bg-slate-50 border border-slate-200'
+                    }`}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <span id="mark-read-text">{finalUnit?.completado ? 'Completado' : 'Marcar como Leído'}</span>
+                 </button>
+            </div>
+        </footer>
+    </div>
+
+    <div slot="sidebar-right" class="h-full">
+        <ChatSidebar 
+            client:load 
+            unitName={unitNombre} 
+            moduleName={moduleDisplayName} 
+            unitSlug={finalUnit?.slug} 
+        />
+    </div>
+
+    <script>
+        import { toggleUnitProgress } from '../../lib/books';
+
+        function setupReadButton() {
+            const btn = document.getElementById('mark-read-btn');
+            const text = document.getElementById('mark-read-text');
+            if (!btn || !text) return;
+
+            btn.addEventListener('click', async () => {
+                const slug = btn.getAttribute('data-slug');
+                const isRead = btn.getAttribute('data-is-read') === 'true';
+                const nextReadState = !isRead;
+
+                if (!slug) return;
+
+                // --- UI OPTIMISTA ---
+                btn.setAttribute('data-is-read', nextReadState ? 'true' : 'false');
+                if (nextReadState) {
+                    btn.classList.remove('bg-white', 'text-slate-500', 'hover:text-slate-800', 'hover:bg-slate-50', 'border', 'border-slate-200');
+                    btn.classList.add('bg-medical-green-600', 'text-white', 'shadow-medical-green-600/20', 'border-medical-green-500');
+                    text.textContent = 'Completado';
+                } else {
+                    btn.classList.add('bg-white', 'text-slate-500', 'hover:text-slate-800', 'hover:bg-slate-50', 'border', 'border-slate-200');
+                    btn.classList.remove('bg-medical-green-600', 'text-white', 'shadow-medical-green-600/20', 'border-medical-green-500');
+                    text.textContent = 'Marcar como Leído';
+                }
+
+                try {
+                    const { error } = await toggleUnitProgress(slug, nextReadState);
+                    if (error) throw error;
+                    console.log(`✅ Progreso sincronizado: ${slug} (${nextReadState})`);
+                } catch (err) {
+                    console.error('❌ Error sincronizando progreso:', err);
+                }
+            });
+        }
+
+        setupReadButton();
+        document.addEventListener('astro:page-load', () => {
+            setupReadButton();
+        });
+    </script>
+</Layout>

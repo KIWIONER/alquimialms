@@ -1,0 +1,20 @@
+---
+import Layout from '../layouts/Layout.astro';
+import QuizEngine from '../components/quiz/QuizEngine';
+import ChatSidebar from '../components/ChatSidebar';
+import { getLibraryStructure } from '../lib/books';
+
+const modules = await getLibraryStructure();
+---
+
+<Layout title="Evaluación Adaptativa">
+    <!-- El QuizEngine es el SPA que maneja todo el flujo sin recargas -->
+    <div class="h-full bg-white flex flex-col">
+        <QuizEngine client:load modules={modules} />
+    </div>
+
+
+	<div slot="sidebar-right" class="h-full">
+		<ChatSidebar client:load />
+	</div>
+</Layout>

@@ -1,0 +1,119 @@
+---
+import '../styles/global.css';
+import { ClientRouter } from 'astro:transitions';
+import SidebarHierarchy from '../components/SidebarHierarchy.astro';
+
+interface Props {
+	title: string;
+	showSidebars?: boolean;
+}
+
+const { title, showSidebars = true } = Astro.props;
+const pathname = new URL(Astro.request.url).pathname;
+
+const navLinks = [
+	{ name: 'Dashboard', href: '/dashboard' },
+	{ name: 'Biblioteca', href: '/biblioteca' },
+	{ name: 'Evaluación', href: '/evaluacion' },
+	{ name: 'Historial', href: '/historial' },
+	{ name: 'Admin', href: '/admin' },
+];
+---
+
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="description" content="Alquimia - Escuela Online de Nutrición" />
+		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+		<ClientRouter />
+	</head>
+	<body class="h-screen overflow-hidden flex flex-col bg-slate-50 font-inter">
+		<!-- Global Navigation -->
+		<nav class="h-16 border-b border-slate-200 bg-white flex items-center px-6 justify-between shrink-0 z-50 shadow-sm relative">
+			<div class="flex items-center gap-2">
+				<div class="w-8 h-8 bg-medical-green-500 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-medical-green-500/20">A</div>
+				<span class="font-bold text-xl tracking-tight text-slate-800 italic">Alquimia <span class="text-medical-green-500 not-italic">LMS</span></span>
+			</div>
+			
+			<div class="flex items-center gap-6 text-sm font-medium text-slate-500">
+				{navLinks.map((link) => (
+					<a 
+						href={link.href} 
+						class={`hover:text-medical-green-600 transition-all relative py-2 ${
+							pathname === link.href 
+								? 'text-slate-900 font-bold' 
+								: ''
+						}`}
+					>
+						{link.name}
+						{pathname === link.href && (
+							<div class="absolute bottom-0 left-0 w-full h-0.5 bg-medical-green-500 rounded-full" transition:name="nav-indicator" />
+						)}
+					</a>
+				))}
+			</div>
+
+			<div class="flex items-center gap-4">
+				<div class="flex flex-col items-end">
+					<span class="text-[10px] text-slate-400 font-bold uppercase">Alumno FP</span>
+					<span class="text-xs font-semibold text-slate-900">User Alquimia</span>
+				</div>
+				<div class="w-10 h-10 rounded-full bg-slate-100 border border-slate-200 overflow-hidden">
+                    <div class="w-full h-full bg-slate-200 flex items-center justify-center text-slate-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                    </div>
+                </div>
+			</div>
+		</nav>
+
+		<!-- Main Page Structure: 3 Panes -->
+		<main class="flex flex-1 overflow-hidden">
+			<!-- Left Pane: Hierarchical Sidebar -->
+			{showSidebars && (
+				<aside class="w-72 shrink-0 z-40 shadow-xl shadow-slate-200/50 bg-white flex flex-col" transition:name="sidebar-left">
+					<SidebarHierarchy />
+                    <slot name="sidebar-left" />
+				</aside>
+			)}
+
+			<!-- Center Pane: Content / Viewer (Flexible) -->
+			<section class="flex-1 bg-slate-50 flex flex-col overflow-y-auto relative min-w-0">
+				<slot />
+			</section>
+
+			<!-- Right Pane: AI Tutor Chat (Persistent) -->
+			{showSidebars && (
+				<aside class="w-96 border-l border-slate-200 bg-white flex flex-col shrink-0 z-40 transition-all duration-300" transition:name="sidebar-right">
+					<slot name="sidebar-right" />
+				</aside>
+			)}
+		</main>
+
+		<script>
+			import { trackEvent } from '../lib/tracking';
+
+			function setupTracking() {
+				document.querySelectorAll('[data-track-event]').forEach(el => {
+					el.addEventListener('click', () => {
+						const eventName = el.getAttribute('data-track-event');
+						const details = {
+							id: el.getAttribute('data-track-id'),
+							text: el.textContent?.trim(),
+							path: window.location.pathname
+						};
+						trackEvent(eventName, details);
+					});
+				});
+			}
+
+			// Initialize on first load and after each navigation (Astro View Transitions)
+			document.addEventListener('astro:page-load', setupTracking);
+		</script>
+	</body>
+</html>

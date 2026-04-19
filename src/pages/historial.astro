@@ -1,0 +1,39 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ChatSidebar from '../components/ChatSidebar';
+---
+
+<Layout title="Historial">
+	<div slot="sidebar-left" class="flex-1 p-4">
+		<h3 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Actividad Reciente</h3>
+	</div>
+
+	<div class="p-6">
+		<header class="mb-8">
+			<h1 class="text-3xl font-bold text-slate-800 tracking-tight">Historial de Consultas</h1>
+			<p class="text-slate-500 text-sm mt-1">Revisa tus conversaciones pasadas con el Agente Alquimia y los documentos consultados.</p>
+		</header>
+		
+		<div class="space-y-4">
+			<div class="card-lms flex items-center justify-between">
+				<div>
+					<h3 class="font-bold text-slate-800">Pregunta: Ciclo de Krebs</h3>
+					<p class="text-xs text-slate-500">Ayer, 18:45 • Basado en UD04</p>
+				</div>
+				<button class="text-medical-green-600 text-xs font-bold uppercase hover:underline">Ver Chat</button>
+			</div>
+			
+			<div class="card-lms flex items-center justify-between">
+				<div>
+					<h3 class="font-bold text-slate-800">Lectura: Anatomía Humana</h3>
+					<p class="text-xs text-slate-500">Lunes, 10:20 • Página 45-60</p>
+				</div>
+				<button class="text-medical-green-600 text-xs font-bold uppercase hover:underline">Ir al Visor</button>
+			</div>
+		</div>
+	</div>
+
+	<div slot="sidebar-right" class="flex-1 overflow-hidden">
+		<ChatSidebar client:load />
+	</div>
+</Layout>

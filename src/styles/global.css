@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  --color-medical-green-50: #ecfdf5;
+  --color-medical-green-100: #d1fae5;
+  --color-medical-green-200: #a7f3d0;
+  --color-medical-green-300: #6ee7b7;
+  --color-medical-green-400: #34d399;
+  --color-medical-green-500: #10b981;
+  --color-medical-green-600: #059669;
+  --color-medical-green-700: #047857;
+  --color-medical-green-800: #065f46;
+  --color-medical-green-900: #064e3b;
+}
+
+@layer base {
+  body {
+    @apply bg-slate-50 text-slate-900 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-white/80 backdrop-blur-md border border-slate-200 shadow-sm;
+  }
+  
+  .btn-medical {
+    @apply px-4 py-2 bg-medical-green-500 text-white rounded-lg hover:bg-medical-green-600 transition-all font-medium;
+  }
+  
+  .card-lms {
+    @apply bg-white p-6 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-all;
+  }
+}
+
+/* ------------------------------------------ */
+/* Prose table styles (ReactMarkdown preview)  */
+/* ------------------------------------------ */
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+}
+.prose thead {
+  background-color: #f1f5f9;
+}
+.prose th {
+  padding: 10px 14px;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 1px solid #e2e8f0;
+  text-align: left;
+}
+.prose td {
+  padding: 10px 14px;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+.prose tr:hover td {
+  background-color: #f8fafc;
+}
+.prose tr:nth-child(even) td {
+  background-color: #fafafa;
+}
+
+/* Custom scrollbar for high performance look */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full hover:bg-slate-300;
+}

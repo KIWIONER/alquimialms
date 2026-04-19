@@ -1,0 +1,106 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ChatSidebar from '../components/ChatSidebar';
+import Calendar from '../components/Calendar';
+import { BookOpen, GraduationCap, Clock, Award } from 'lucide-react';
+import { getLibraryStructure } from '../lib/books';
+
+const structure = await getLibraryStructure();
+const firstModule = structure[0];
+const firstUnitLink = firstModule && firstModule.units.length > 0 
+    ? `/leccion/${firstModule.id}/${firstModule.units[0].slug}`
+    : '/biblioteca';
+---
+
+<Layout title="Dashboard">
+	<div slot="sidebar-left" class="flex-1 p-4 space-y-6">
+		<Calendar client:load />
+        
+        <div class="p-4 bg-medical-green-50 rounded-2xl border border-medical-green-100">
+            <h4 class="text-[10px] font-bold text-medical-green-700 uppercase tracking-widest mb-3">Tu siguiente meta</h4>
+            <p class="text-xs text-medical-green-900 font-semibold leading-relaxed">Completa la UD05 para desbloquear el examen de Bioquímica.</p>
+        </div>
+	</div>
+
+	<div class="p-8 max-w-5xl mx-auto">
+		<header class="mb-10">
+			<h1 class="text-4xl font-extrabold text-slate-800 tracking-tight">Centro de Mando Académico</h1>
+			<p class="text-slate-500 text-sm mt-2 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 rounded-full bg-medical-green-500"></span>
+                Curso Actual: Técnico Superior en Dietética (FP)
+            </p>
+		</header>
+
+		<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+			<div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                    <BookOpen size={24} />
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Unidades</p>
+                    <p class="text-xl font-bold text-slate-800">12 / 48</p>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-medical-green-50 text-medical-green-600 flex items-center justify-center">
+                    <GraduationCap size={24} />
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Aprobados</p>
+                    <p class="text-xl font-bold text-slate-800">4 Temas</p>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <Clock size={24} />
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase">Estudio</p>
+                    <p class="text-xl font-bold text-slate-800">24.5h</p>
+                </div>
+            </div>
+		</div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <section class="space-y-4">
+                <h3 class="text-lg font-bold text-slate-800">Continuar Estudiando</h3>
+                <div class="group relative bg-white border border-slate-100 p-6 rounded-3xl shadow-sm hover:shadow-xl hover:shadow-medical-green-500/5 transition-all duration-500 cursor-pointer overflow-hidden">
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-medical-green-50 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-110"></div>
+                    <div class="relative z-10">
+                        <span class="text-[10px] font-bold text-medical-green-600 uppercase tracking-widest bg-medical-green-50 px-2 py-1 rounded-md">Módulo 04</span>
+                        <h4 class="text-xl font-bold text-slate-800 mt-3">Fisiopatología Aplicada a la Dietética</h4>
+                        <p class="text-sm text-slate-500 mt-2">Próxima unidad: UD5. Fisiopatoloxía do aparello dixestivo</p>
+                        <div class="mt-6 flex items-center justify-between">
+                            <div class="flex -space-x-2">
+                                <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-200"></div>
+                                <div class="w-8 h-8 rounded-full border-2 border-white bg-slate-300 flex items-center justify-center text-[10px] font-bold">+12</div>
+                            </div>
+                            <a href="/leccion/fisiopatologia-aplicada-dietetica/inicio" class="btn-medical text-xs shadow-md shadow-medical-green-500/20">Abrir Aula Virtual</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="space-y-4">
+                <h3 class="text-lg font-bold text-slate-800">Evaluación Destacada</h3>
+                <div class="bg-white border border-slate-100 p-6 rounded-3xl shadow-sm">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                            <Award size={20} />
+                        </div>
+                        <h4 class="font-bold text-slate-800">Examen Parcial Módulo 1</h4>
+                    </div>
+                    <p class="text-sm text-slate-500 leading-relaxed italic">Prepárate para la evaluación adaptativa. Gemini generará preguntas basadas en tus lecturas de Alimentación Equilibrada.</p>
+                    <div class="mt-6 pt-6 border-t border-slate-50 flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-600">DISPONIBLE</span>
+                        <a href="/evaluacion" class="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors uppercase tracking-widest">Configurar Examen</a>
+                    </div>
+                </div>
+            </section>
+        </div>
+	</div>
+
+	<div slot="sidebar-right" class="h-full">
+		<ChatSidebar client:load />
+	</div>
+</Layout>

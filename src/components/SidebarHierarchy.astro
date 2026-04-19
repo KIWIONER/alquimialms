@@ -1,0 +1,189 @@
+---
+import { getLibraryStructure, getTotalDocumentCount } from '../lib/books';
+
+const userId = 'estudiante-demo';
+const modules = await getLibraryStructure(userId);
+const totalDocs = await getTotalDocumentCount();
+const currentPath = new URL(Astro.request.url).pathname.toLowerCase().replace(/\/$/, "");
+
+// Determinar el módulo activo basado en la URL (Case insensitive)
+const activeModule = modules.find(m => currentPath.includes(`/${m.id.toLowerCase()}/`) || currentPath.endsWith(`/${m.id.toLowerCase()}`));
+const activeModuleId = activeModule?.id;
+
+// Cálculo de progreso real para el módulo activo
+const activeModuleUnits = activeModule?.units || [];
+const completedInModule = activeModuleUnits.filter(u => u.completado).length;
+const progressPercentage = activeModuleUnits.length > 0 
+    ? Math.round((completedInModule / activeModuleUnits.length) * 100) 
+    : 0;
+---
+
+<div class="flex flex-col h-full bg-white border-r border-slate-200" transition:name="sidebar-hierarchy">
+    <!-- Header -->
+    <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+        <div>
+            <h2 class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Currículo FP</h2>
+        </div>
+        <div class="bg-medical-green-100 text-medical-green-700 text-[9px] font-black px-2 py-0.5 rounded-full border border-medical-green-200 shadow-sm animate-pulse">
+            {totalDocs} DOCS
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="flex-1 overflow-y-auto p-2 space-y-1" id="sidebar-nav">
+        {modules.map((mod) => (
+            <div class="module-group" data-module-id={mod.id}>
+                <button 
+                    class={`w-full flex items-center justify-between p-2.5 rounded-lg text-sm font-semibold transition-all module-toggle ${
+                        activeModuleId === mod.id 
+                            ? 'bg-medical-green-50 text-medical-green-800' 
+                            : 'text-slate-600 hover:bg-slate-50'
+                    }`}
+                >
+                    <div class="flex items-center gap-3 pointer-events-none">
+                        <svg xmlns="http://www.w3.org/2000/svg" class={`h-4 w-4 ${activeModuleId === mod.id ? 'text-medical-green-500' : 'text-slate-400'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                        </svg>
+                        <span class="truncate">{mod.name}</span>
+                    </div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class={`h-3 w-3 transform transition-transform ${activeModuleId === mod.id ? 'rotate-90' : ''} text-slate-400`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+                
+                <div class={`units-container ml-9 mt-1 space-y-1 border-l border-medical-green-200 pl-3 py-1 ${activeModuleId === mod.id ? '' : 'hidden'}`}>
+                    {mod.units.map((unit) => (
+                        <a 
+                            href={`/leccion/${mod.id}/${unit.slug}`} 
+                            class={`flex items-center justify-between py-1.5 text-xs transition-all border-l-2 pl-2 group-unit ${
+                                currentPath.includes(`/${unit.slug}`)
+                                    ? 'text-medical-green-700 font-bold border-medical-green-500' 
+                                    : 'text-slate-500 hover:text-medical-green-700 border-transparent hover:border-medical-green-300'
+                            }`}
+                            data-unit-slug={unit.slug}
+                            data-astro-prefetch
+                        >
+                            <span class="truncate">{unit.nombre.replace(/\.(pdf|PDF|docx|DOCX)$/, '')}</span>
+                            
+                            <div class={`check-indicator shrink-0 transition-all ${unit.completado ? 'opacity-100' : 'opacity-0 scale-50'}`}>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-medical-green-500" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                                </svg>
+                            </div>
+                        </a>
+                    ))}
+                </div>
+            </div>
+        ))}
+    </nav>
+
+    <script>
+        import { supabase } from '../lib/supabase';
+
+        function initSidebar() {
+            const nav = document.getElementById('sidebar-nav');
+            if (!nav) return;
+
+            if (nav.hasAttribute('data-sidebar-initialized')) return;
+            nav.setAttribute('data-sidebar-initialized', 'true');
+
+            console.log('🛡️ Sidebar: Sistema de navegación activado');
+
+            nav.addEventListener('click', (e) => {
+                const target = e.target as HTMLElement;
+                const toggle = target.closest('.module-toggle');
+                
+                if (toggle) {
+                    const group = toggle.closest('.module-group');
+                    const container = group?.querySelector('.units-container');
+                    const icon = toggle.querySelector('svg:last-child');
+                    
+                    if (container) {
+                        const isHidden = container.classList.contains('hidden');
+                        if (isHidden) {
+                            container.classList.remove('hidden');
+                            icon?.classList.add('rotate-90');
+                        } else {
+                            container.classList.add('hidden');
+                            icon?.classList.remove('rotate-90');
+                        }
+                    }
+                }
+            });
+
+            const userId = 'estudiante-demo';
+            
+            supabase
+                .channel('realtime_progress')
+                .on(
+                    'postgres_changes', 
+                    { 
+                        event: '*', 
+                        schema: 'nutricionista', 
+                        table: 'pasos_completados',
+                        filter: `user_id=eq.${userId}`
+                    }, 
+                    (payload) => {
+                        console.log('🔄 Sincronización de progreso recibida', payload);
+                        
+                        const slug = payload.eventType === 'DELETE' 
+                            ? (payload.old as any).document_slug 
+                            : (payload.new as any).document_slug;
+                        
+                        const isRead = payload.eventType !== 'DELETE';
+
+                        document.querySelectorAll(`[data-unit-slug="${slug}"] .check-indicator`).forEach(indicator => {
+                            if (isRead) {
+                                indicator.classList.remove('opacity-0', 'scale-50');
+                                indicator.classList.add('opacity-100');
+                            } else {
+                                indicator.classList.add('opacity-0', 'scale-50');
+                                indicator.classList.remove('opacity-100');
+                            }
+                        });
+
+                        updateProgressBar();
+                    }
+                )
+                .subscribe();
+        }
+
+        function updateProgressBar() {
+            // Buscamos el contenedor del módulo activo (el que no está oculto)
+            const activeContainer = document.querySelector('.units-container:not(.hidden)');
+            if (!activeContainer) return;
+
+            const units = activeContainer.querySelectorAll('.group-unit');
+            // Contamos los indicadores que NO tienen la clase 'opacity-0'
+            const completed = activeContainer.querySelectorAll('.check-indicator:not(.opacity-0)');
+            
+            const percentage = units.length > 0 
+                ? Math.round((completed.length / units.length) * 100) 
+                : 0;
+
+            const text = document.getElementById('progress-text');
+            const bar = document.getElementById('progress-bar-fill');
+            
+            if (text) text.textContent = `${percentage}%`;
+            if (bar) (bar as HTMLElement).style.width = `${percentage}%`;
+            
+            console.log(`📊 Progreso actualizado localmente: ${percentage}%`);
+        }
+
+        initSidebar();
+        document.addEventListener('astro:page-load', initSidebar);
+    </script>
+
+    <!-- Footer de Progreso (Más grande y visible) -->
+    <div class="p-6 border-t border-slate-100 bg-slate-50/50 shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
+        <div class="flex justify-between items-center mb-3">
+            <span class="text-xs font-bold text-slate-500 uppercase tracking-tighter">Progreso del Módulo</span>
+            <span class="text-sm font-black text-medical-green-600 tabular-nums" id="progress-text">
+                {progressPercentage}%
+            </span>
+        </div>
+        <div class="w-full h-2.5 bg-slate-200/50 rounded-full overflow-hidden border border-slate-100">
+            <div class="h-full bg-medical-green-500 shadow-[0_0_8px_rgba(16,185,129,0.3)] transition-all duration-700 ease-out" id="progress-bar-fill" style={`width: ${progressPercentage}%;`}></div>
+        </div>
+    </div>
+</div>

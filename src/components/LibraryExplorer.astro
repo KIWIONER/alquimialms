@@ -1,0 +1,83 @@
+---
+import { getLibraryStructure } from '../lib/books';
+
+const modules = await getLibraryStructure();
+
+// Para las miniaturas, usamos una lógica de color basada en el índice
+const colors = [
+    'bg-medical-green-500',
+    'bg-indigo-500',
+    'bg-amber-500',
+    'bg-red-500',
+    'bg-slate-700',
+    'bg-emerald-600',
+    'bg-blue-600'
+];
+---
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+    {modules.map((mod, i) => {
+        const totalUnits = mod.units.length;
+        const completedUnits = mod.units.filter(u => u.completado).length;
+        const progressPercentage = totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
+
+        return (
+        <div class="group bg-white rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-medical-green-500/10 transition-all duration-500 overflow-hidden flex flex-col min-h-[400px]">
+            {/* Portada Representativa */}
+            <div class={`h-48 ${colors[i % colors.length]} relative flex items-center justify-center overflow-hidden`}>
+                <div class="absolute inset-0 bg-black/10"></div>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <div class="absolute bottom-3 left-4 flex flex-col">
+                    <span class="text-[9px] font-bold text-white/80 uppercase tracking-widest bg-white/10 backdrop-blur-md px-2 py-0.5 rounded w-fit">Módulo {i + 1}</span>
+                    <span class="text-[10px] font-bold text-white mt-1">{totalUnits} Documentos</span>
+                </div>
+            </div>
+
+            <div class="p-6 flex-1 flex flex-col">
+                <h3 class="font-bold text-slate-800 text-lg leading-tight group-hover:text-medical-green-600 transition-colors">
+                    {mod.name}
+                </h3>
+                <p class="text-xs text-slate-400 mt-2 line-clamp-2 italic">
+                    Contenido oficial del Grado Superior en Dietética sincronizado directamente desde la base de datos nutricionista.
+                </p>
+
+                {/* Progress Bar */}
+                <div class="mt-5">
+                    <div class="flex items-center justify-between text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">
+                        <span>Progreso</span>
+                        <span class={`transition-colors ${progressPercentage === 100 ? 'text-medical-green-600' : 'text-slate-600'}`}>
+                            {progressPercentage}%
+                        </span>
+                    </div>
+                    <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div 
+                            class={`h-full rounded-full transition-all duration-1000 ${progressPercentage === 100 ? 'bg-medical-green-500 shadow-[0_0_10px_rgba(34,197,94,0.4)]' : 'bg-slate-800'}`} 
+                            style={`width: ${progressPercentage}%`}
+                        ></div>
+                    </div>
+                </div>
+
+                <div class="mt-auto pt-6 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-1.5 h-1.5 rounded-full bg-medical-green-500"></div>
+                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Indexado</span>
+                    </div>
+                    {mod.firstUnit && (
+                        <a 
+                            href={`/leccion/${mod.id}/${mod.firstUnit.slug}`}
+                            class="text-xs font-bold text-medical-green-600 hover:text-medical-green-700 flex items-center gap-1 group/btn"
+                        >
+                            Estudiar
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </a>
+                    )}
+                </div>
+            </div>
+        </div>
+        );
+    })}
+</div>
