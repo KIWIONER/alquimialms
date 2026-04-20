@@ -23,11 +23,9 @@ const RichCardEditor = ({ content, onChange, onFocus, placeholder = 'Escribe aqu
             Placeholder.configure({ placeholder }),
             Markdown.configure({
                 html: true,
-                tightLists: true,
-                tightListItems: true,
                 transformPastedText: true,
                 transformCopiedText: true,
-                breaks: true,
+                breaks: false,
             }),
         ],
         content: content || '',
@@ -54,8 +52,8 @@ const RichCardEditor = ({ content, onChange, onFocus, placeholder = 'Escribe aqu
             <style>{`
                 .tiptap { outline: none; min-height: 100px; }
                 .tiptap p { margin-bottom: 1.25rem; font-size: 1rem; color: #334155; line-height: 1.7; }
-                .tiptap h3 { font-size: 1.5rem; font-weight: 800; margin: 2rem 0 1rem; color: #0f172a; }
-                .tiptap strong { color: #0f172a; font-weight: 800; }
+                .tiptap h3 { font-size: 1.3rem; font-weight: 700; margin: 1.5rem 0 0.75rem; color: #1e293b; letter-spacing: -0.01em; }
+                .tiptap strong { color: #0f172a; font-weight: 700; }
                 .tiptap ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1.25rem; }
                 .tiptap ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 1.25rem; }
                 .tiptap li { font-size: 0.95rem; color: #475569; margin-bottom: 0.4rem; }
