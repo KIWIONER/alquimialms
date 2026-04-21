@@ -181,7 +181,7 @@ const DocumentEditor = () => {
     const [pdfWidth, setPdfWidth] = useState(45);
     const [navWidth, setNavWidth] = useState(400);
     const [resizingMode, setResizingMode] = useState(null); // 'nav' | 'pdf' | null
-    const [asignaturasOpen, setAsignaturasOpen] = useState(true);
+    const [asignaturasOpen, setAsignaturasOpen] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [promptModal, setPromptModal] = useState({ isOpen: false, title: '', defaultValue: '', onConfirm: null, onCancel: null });
     const [docOrderMaps, setDocOrderMaps] = useState(() => { if (typeof window !== 'undefined') { const saved = localStorage.getItem('alquimia_docs_order'); return saved ? JSON.parse(saved) : {}; } return {}; });
