@@ -1,13 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import GanttTimeline from '../components/GanttTimeline.jsx';
-import ChatSidebar from '../components/ChatSidebar.jsx';
 ---
 
 <Layout title="Planificación de Curso | Alquimia LMS" showSidebars={true}>
     <GanttTimeline client:load />
-
-    <div slot="sidebar-right" class="h-full">
-        <ChatSidebar client:load />
-    </div>
 </Layout>

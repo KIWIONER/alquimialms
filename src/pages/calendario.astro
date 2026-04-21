@@ -1,13 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import FullCalendar from '../components/FullCalendar.jsx';
-import ChatSidebar from '../components/ChatSidebar.jsx';
 ---
 
 <Layout title="Calendario Académico | Alquimia LMS" showSidebars={true}>
     <FullCalendar client:load />
-
-    <div slot="sidebar-right" class="h-full">
-        <ChatSidebar client:load />
-    </div>
 </Layout>

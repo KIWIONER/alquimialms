@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { ClientRouter } from 'astro:transitions';
 import SidebarHierarchy from '../components/SidebarHierarchy.astro';
+import FloatingChat from '../components/FloatingChat.jsx';
 
 interface Props {
 	title: string;
@@ -90,12 +91,9 @@ const navLinks = [
 			</section>
 
 			<!-- Right Pane: AI Tutor Chat (Persistent) -->
-			{showSidebars && (
-				<aside class="w-64 border-l border-slate-200 bg-white flex flex-col shrink-0 z-40 transition-all duration-300" transition:name="sidebar-right">
-					<slot name="sidebar-right" />
-				</aside>
-			)}
-		</main>
+			{/* El Chat se ha movido a un componente flotante global para mejor usabilidad */}
+		<!-- Componentes Globales Flotantes -->
+		<FloatingChat client:load />
 
 		<script>
 			import { trackEvent } from '../lib/tracking';
