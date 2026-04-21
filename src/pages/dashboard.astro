@@ -37,25 +37,25 @@ if (!nextUnit && structure.length > 0) {
 const continueLink = nextUnit 
     ? `/leccion/${currentModule.id}/${nextUnit.slug}`
     : '/biblioteca';
+import AIStudyButton from '../components/AIStudyButton.jsx';
 ---
 
 <Layout title="Dashboard">
 	<div slot="sidebar-left" class="flex-1 p-4 space-y-6">
 		<Calendar client:load />
-        
-        <div class="p-4 bg-medical-green-50 rounded-2xl border border-medical-green-100">
-            <h4 class="text-[10px] font-bold text-medical-green-700 uppercase tracking-widest mb-3">Tu siguiente meta</h4>
-            <p class="text-xs text-medical-green-900 font-semibold leading-relaxed">Completa la UD05 para desbloquear el examen de Bioquímica.</p>
-        </div>
+
 	</div>
 
 	<div class="p-8 max-w-5xl mx-auto">
-		<header class="mb-10">
-			<h1 class="text-4xl font-extrabold text-slate-800 tracking-tight">Centro de Mando Académico</h1>
-			<p class="text-slate-500 text-sm mt-2 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 rounded-full bg-medical-green-500"></span>
-                Curso Actual: Técnico Superior en Dietética (FP)
-            </p>
+		<header class="mb-10 flex items-start justify-between">
+			<div>
+                <h1 class="text-4xl font-extrabold text-slate-800 tracking-tight">Centro de Mando Académico</h1>
+                <p class="text-slate-500 text-sm mt-2 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-medical-green-500"></span>
+                    Curso Actual: Técnico Superior en Dietética (FP)
+                </p>
+            </div>
+            <AIStudyButton client:load />
 		</header>
 
 		<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
