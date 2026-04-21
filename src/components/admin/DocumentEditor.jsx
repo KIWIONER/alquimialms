@@ -32,23 +32,32 @@ import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 const DocItem = ({ doc, isSelected, onSelect, onRename, onDelete }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [tempName, setTempName] = useState(doc.nombre);
+    const cardCount = doc.tarjetas?.length || 0;
     
     const handleSave = () => { onRename(doc.id, tempName); setIsEditing(false); };
     
     return (
         <div className="mb-1.5 flex items-center group/doc mr-2">
             <div className={`flex-1 flex items-center gap-3 py-2.5 px-4 rounded-xl border transition-all ${isSelected ? 'bg-white border-medical-green-500 shadow-md ring-2 ring-medical-green-50' : 'border-transparent text-slate-400 hover:bg-white hover:border-slate-100 hover:shadow-sm'}`}>
+                {/* INDICADOR DE ESTADO (PUNTO) */}
+                <div className={`w-2 h-2 rounded-full shrink-0 ${cardCount > 0 ? 'bg-medical-green-500 shadow-[0_0_8px_rgba(34,197,94,0.4)]' : 'bg-slate-200 shadow-inner'}`} />
+                
                 {isEditing ? (
                     <input autoFocus value={tempName} onChange={e => setTempName(e.target.value)} onBlur={handleSave} onKeyDown={e => e.key === 'Enter' && handleSave()} className="bg-transparent border-none text-slate-900 font-bold text-[11px] uppercase tracking-wider focus:outline-none w-full" />
                 ) : (
-                    <div className="flex-1 flex items-start justify-between gap-2 overflow-hidden">
-                        <span onClick={() => onSelect(doc)} className="font-black text-[11px] uppercase tracking-wider cursor-pointer text-left break-words leading-snug flex-1">{doc.nombre}</span>
-                        <div className="flex items-center gap-1 opacity-0 group-hover/doc:opacity-100 transition-all shrink-0 mt-0.5">
+                    <div className="flex-1 flex items-center justify-between gap-2 overflow-hidden">
+                        <div className="flex flex-col min-w-0" onClick={() => onSelect(doc)}>
+                            <span className="font-black text-[11px] uppercase tracking-wider cursor-pointer text-left break-words leading-tight text-slate-700 truncate">{doc.nombre}</span>
+                            <span className={`text-[8px] font-bold uppercase tracking-widest mt-0.5 ${cardCount > 0 ? 'text-medical-green-600' : 'text-slate-300'}`}>
+                                {cardCount > 0 ? `${cardCount} temas listos` : 'Vacío (IA)'}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-1 opacity-0 group-hover/doc:opacity-100 transition-all shrink-0">
                             <button onClick={(e) => { e.stopPropagation(); setIsEditing(true); }} className="p-1 hover:text-medical-green-600 transition-all" title="Renombrar Unidad">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                             </button>
                             <button onClick={(e) => { e.stopPropagation(); onDelete(doc.id); }} className="p-1 hover:text-red-500 transition-all" title="Eliminar Unidad">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                         </div>
                     </div>
@@ -197,8 +206,9 @@ const DocumentEditor = () => {
     const fetchDocuments = async () => {
         try { 
             // Forzamos orden alfabético/numérico por defecto para que aparezcan UD1, UD2... correctamente
+            // También traemos los IDs de las tarjetas (solo el ID para que pese poco) para contar cuántas hay
             const { data, error } = await supabase.schema('nutricionista').from('documentos')
-                .select('id, nombre, carpeta, url, orden')
+                .select('id, nombre, carpeta, url, orden, tarjetas(id)')
                 .order('carpeta', { ascending: true })
                 .order('nombre', { ascending: true }); 
             
