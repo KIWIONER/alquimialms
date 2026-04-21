@@ -1006,17 +1006,15 @@ const DocumentEditor = () => {
                              <span className="text-[10px] font-black uppercase text-slate-300 tracking-[1em] opacity-50">Selecciona una unidad</span>
                         </div>
                     )}
-                </div>
-
-                {/* SCROLL DE TARJETAS */}
-                <div className="flex-1 overflow-y-auto p-12 custom-scrollbar relative">
-                    {/* BOTONES FLOTANTES (POST-IT) JUNTO AL DIVISOR */}
+                {/* CONTENEDOR PRINCIPAL DEL EDITOR (BARRA LATERAL IZQ + SCROLL CENTRAL) */}
+                <div className="flex-1 relative flex flex-col overflow-hidden">
+                    {/* BOTONES FLOTANTES (POST-IT) - FIJOS AL DIVISOR IZQUIERDO */}
                     {selectedDoc && (
-                        <div className="absolute left-0 top-12 z-[220] flex flex-col gap-0.5">
+                        <div className="absolute left-0 top-12 z-[220] flex flex-col gap-0.5 pointer-events-none">
                             {selectedDoc.url && (
                                 <button 
                                     onClick={() => setShowPdf(!showPdf)} 
-                                    className={`flex flex-col items-center justify-center gap-1.5 w-12 py-5 rounded-r-2xl border border-l-0 shadow-lg transition-all active:scale-95 group ${showPdf ? 'bg-slate-900 border-slate-900 text-white' : 'bg-medical-green-500 border-medical-green-500 text-white hover:w-14 hover:pr-2'}`}
+                                    className={`pointer-events-auto flex flex-col items-center justify-center gap-1.5 w-12 py-5 rounded-r-2xl border border-l-0 shadow-lg transition-all active:scale-95 group ${showPdf ? 'bg-slate-900 border-slate-900 text-white' : 'bg-medical-green-500 border-medical-green-500 text-white hover:w-14 hover:pr-2'}`}
                                     title="Visor PDF"
                                 >
                                     <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /><path d="M9 13h6m-6 4h6m-6-8h1" /></svg>
@@ -1025,7 +1023,7 @@ const DocumentEditor = () => {
                             )}
                             <button 
                                 onClick={handleCollapseAll} 
-                                className="flex flex-col items-center justify-center gap-1.5 w-12 py-5 rounded-r-2xl bg-white border border-l-0 border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-300 hover:w-14 hover:pr-2 shadow-md transition-all active:scale-95"
+                                className="pointer-events-auto flex flex-col items-center justify-center gap-1.5 w-12 py-5 rounded-r-2xl bg-white border border-l-0 border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-300 hover:w-14 hover:pr-2 shadow-md transition-all active:scale-95"
                                 title="Colapsar Todo"
                             >
                                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M5 11l7 7 7-7" /></svg>
@@ -1033,7 +1031,7 @@ const DocumentEditor = () => {
                             </button>
                             <button 
                                 onClick={handleExpandAll} 
-                                className="flex flex-col items-center justify-center gap-1.5 w-12 py-5 rounded-r-2xl bg-white border border-l-0 border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-300 hover:w-14 hover:pr-2 shadow-md transition-all active:scale-95"
+                                className="pointer-events-auto flex flex-col items-center justify-center gap-1.5 w-12 py-5 rounded-r-2xl bg-white border border-l-0 border-slate-100 text-slate-400 hover:text-slate-900 hover:border-slate-300 hover:w-14 hover:pr-2 shadow-md transition-all active:scale-95"
                                 title="Expandir Todo"
                             >
                                 <svg className="h-5 w-5 rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path d="M5 11l7 7 7-7" /></svg>
@@ -1041,66 +1039,66 @@ const DocumentEditor = () => {
                             </button>
                         </div>
                     )}
-                </div>
 
-                {/* SCROLL DE TARJETAS */}
-                <div className="flex-1 overflow-y-auto p-12 custom-scrollbar relative">
-                    {isProcessing && (
-                        <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-[200] flex flex-col items-center justify-center animate-in fade-in duration-500">
-                            <div className="w-24 h-24 rounded-[2.5rem] bg-white shadow-2xl flex items-center justify-center mb-8 border border-slate-100">
-                                <div className="w-12 h-12 border-4 border-medical-green-500 border-t-transparent rounded-full animate-spin"></div>
+                    {/* AREA DE SCROLL DE TARJETAS */}
+                    <div className="flex-1 overflow-y-auto p-12 custom-scrollbar relative">
+                        {isProcessing && (
+                            <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-[200] flex flex-col items-center justify-center animate-in fade-in duration-500">
+                                <div className="w-24 h-24 rounded-[2.5rem] bg-white shadow-2xl flex items-center justify-center mb-8 border border-slate-100">
+                                    <div className="w-12 h-12 border-4 border-medical-green-500 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                                <h3 className="text-xl font-black uppercase tracking-[0.3em] text-slate-800">Alquimizando...</h3>
+                                <p className="text-slate-400 text-sm mt-4 font-medium italic">La IA está estructurando tu contenido</p>
                             </div>
-                            <h3 className="text-xl font-black uppercase tracking-[0.3em] text-slate-800">Alquimizando...</h3>
-                            <p className="text-slate-400 text-sm mt-4 font-medium italic">La IA está estructurando tu contenido</p>
-                        </div>
-                    )}
+                        )}
 
-                    {(resizingMode === 'nav') && (
-                        <div className="absolute inset-0 z-[210] cursor-col-resize" />
-                    )}
+                        {(resizingMode === 'nav') && (
+                            <div className="absolute inset-0 z-[210] cursor-col-resize" />
+                        )}
 
-                    {selectedDoc ? (
-                        <div className="max-w-4xl mx-auto space-y-16 pb-96">
-                            <DndContext sensors={sensors} modifiers={[restrictToVerticalAxis]} onDragEnd={async (event) => {
-                                const { active, over } = event; if (!over || active.id === over.id) return;
-                                const oldIdx = tarjetas.findIndex(t => t.id === active.id); const newIdx = tarjetas.findIndex(t => t.id === over.id);
-                                const newTs = arrayMove(tarjetas, oldIdx, newIdx); setTarjetas(newTs);
-                                setSaveStatus('saving');
-                                try {
-                                    const ups = newTs.map((t, i) => ({ id: t.id, orden: i, documento_id: selectedDoc.id, titulo: t.titulo, contenido: t.contenido, updated_at: new Date().toISOString() }));
-                                    await supabase.schema('nutricionista').from('tarjetas').upsert(ups); setSaveStatus('saved');
-                                    setTimeout(() => setSaveStatus('idle'), 2000);
-                                } catch { setSaveStatus('idle'); }
-                            }}>
-                                <SortableContext items={tarjetas.map(t => t.id)} strategy={verticalListSortingStrategy}>
-                                    {tarjetas.map((t, i) => (
-                                        <SortableCard 
-                                            key={t.id} 
-                                            t={t} 
-                                            index={i} 
-                                            selectedCardId={selectedCardId} 
-                                            setSelectedCardId={setSelectedCardId}
-                                            updateLocalTarjeta={updateLocalTarjeta}
-                                            deleteTarjeta={handleDeleteCard}
-                                            onSplitIA={handlePerfectCardWithIA}
-                                            previewModes={previewModes}
-                                            setPreviewModes={setPreviewModes}
-                                            activeEditorRef={activeEditorRef}
-                                            setActiveEditorState={setActiveEditorState}
-                                            isCollapsed={collapsedCards.has(t.id)}
-                                            toggleCollapse={toggleCollapse}
-                                            ref={el => (cardRefs.current[t.id] = el)}
-                                        />
-                                    ))}
-                                </SortableContext>
-                            </DndContext>
-                        </div>
-                    ) : (
-                        <div className="h-full flex flex-col items-center justify-center opacity-20 grayscale">
-                            <div className="text-9xl mb-8">🏺</div>
-                            <span className="text-2xl font-black uppercase tracking-[1em]">Alquimia LMS</span>
-                        </div>
-                    )}
+                        {selectedDoc ? (
+                            <div className="max-w-4xl mx-auto space-y-16 pb-96">
+                                <DndContext sensors={sensors} modifiers={[restrictToVerticalAxis]} onDragEnd={async (event) => {
+                                    const { active, over } = event; if (!over || active.id === over.id) return;
+                                    const oldIdx = tarjetas.findIndex(t => t.id === active.id); const newIdx = tarjetas.findIndex(t => t.id === over.id);
+                                    const newTs = arrayMove(tarjetas, oldIdx, newIdx); setTarjetas(newTs);
+                                    setSaveStatus('saving');
+                                    try {
+                                        const ups = newTs.map((t, i) => ({ id: t.id, orden: i, documento_id: selectedDoc.id, titulo: t.titulo, contenido: t.contenido, updated_at: new Date().toISOString() }));
+                                        await supabase.schema('nutricionista').from('tarjetas').upsert(ups); setSaveStatus('saved');
+                                        setTimeout(() => setSaveStatus('idle'), 2000);
+                                    } catch { setSaveStatus('idle'); }
+                                }}>
+                                    <SortableContext items={tarjetas.map(t => t.id)} strategy={verticalListSortingStrategy}>
+                                        {tarjetas.map((t, i) => (
+                                            <SortableCard 
+                                                key={t.id} 
+                                                t={t} 
+                                                index={i} 
+                                                selectedCardId={selectedCardId} 
+                                                setSelectedCardId={setSelectedCardId}
+                                                updateLocalTarjeta={updateLocalTarjeta}
+                                                deleteTarjeta={handleDeleteCard}
+                                                onSplitIA={handlePerfectCardWithIA}
+                                                previewModes={previewModes}
+                                                setPreviewModes={setPreviewModes}
+                                                activeEditorRef={activeEditorRef}
+                                                setActiveEditorState={setActiveEditorState}
+                                                isCollapsed={collapsedCards.has(t.id)}
+                                                toggleCollapse={toggleCollapse}
+                                                ref={el => (cardRefs.current[t.id] = el)}
+                                            />
+                                        ))}
+                                    </SortableContext>
+                                </DndContext>
+                            </div>
+                        ) : (
+                            <div className="h-full flex flex-col items-center justify-center opacity-20 grayscale">
+                                <div className="text-9xl mb-8">🏺</div>
+                                <span className="text-2xl font-black uppercase tracking-[1em]">Alquimia LMS</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
