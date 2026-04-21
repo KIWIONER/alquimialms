@@ -1,5 +1,6 @@
 ---
 import { getLibraryStructure, getTotalDocumentCount } from '../lib/books';
+import AIStudyButton from './AIStudyButton.jsx';
 
 const userId = 'estudiante-demo';
 const modules = await getLibraryStructure(userId);
@@ -31,11 +32,16 @@ const progressPercentage = activeModuleUnits.length > 0
 
     <!-- Navigation -->
     <nav class="flex-1 overflow-y-auto p-3 space-y-1" id="sidebar-nav">
+        <!-- Botón Universal Estudia con IA -->
+        <div class="mb-4">
+            <AIStudyButton client:load />
+        </div>
+
         <!-- Botón Especial Calendario Admin (Solo visible en rutas /admin) -->
         {currentPath.includes('/admin') && (
             <a 
                 href="/admin/calendario" 
-                class="w-full flex items-center justify-between p-4 mb-6 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] bg-slate-900 text-white shadow-xl shadow-slate-900/10 hover:bg-slate-800 transition-all group"
+                class="w-full flex items-center justify-between p-4 mb-6 rounded-2xl text-[10px] font-black uppercase tracking-[0.15em] bg-slate-900 border border-slate-700 text-white shadow-xl shadow-slate-900/10 hover:bg-slate-800 transition-all group"
             >
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 bg-medical-green-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-medical-green-500/20">
