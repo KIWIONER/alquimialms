@@ -5,8 +5,12 @@ export const useChatStore = create((set, get) => ({
     loading: false,
     isTestActive: false,
     activeTestContent: '',
+    isOpen: false,
     
     // Acciones
+    openChat: () => set({ isOpen: true }),
+    closeChat: () => set({ isOpen: false }),
+    toggleChat: () => set((state) => ({ isOpen: !state.isOpen })),
     addMessage: (msg) => set((state) => ({ messages: [...state.messages, msg] })),
     setLoading: (isLoading) => set({ loading: isLoading }),
 
