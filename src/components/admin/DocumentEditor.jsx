@@ -485,26 +485,29 @@ const DocumentEditor = () => {
         setIsProcessing(true);
         setToolsMenuOpen(false);
         try {
-            // 1. Obtener contenido base del documento (o unir tarjetas actuales si no hay base)
-            const { data: docData } = await supabase.schema('nutricionista').from('documentos').select('contenido, url').eq('id', selectedDoc.id).single();
-            const rawContent = docData?.contenido || joinBlocks(tarjetas);
-
+            // 1. Decidir estrategia: ¿Leemos del texto guardado o extraemos del PDF original?
+            // Priorizamos el PDF original si existe, para asegurar que el re-renderizado sea fiel al origen.
+            const hasPdf = selectedDoc.url && selectedDoc.url.toLowerCase().includes('.pdf');
+            
             let payload = {};
+            let isPdfExtraction = false;
 
-            if (!rawContent) {
-                // Si no hay contenido de texto, intentamos enviar el PDF a n8n para que lo extraiga directamente
-                if (selectedDoc.url && selectedDoc.url.toLowerCase().includes('.pdf')) {
-                    payload = {
-                        action: 'extract_and_structure_pdf',
-                        doc_id: selectedDoc.id,
-                        pdf_url: selectedDoc.url,  // n8n body.pdf_url
-                        nombre: selectedDoc.nombre, // n8n body.nombre
-                        carpeta: selectedDoc.carpeta || 'General' // n8n body.carpeta
-                    };
-                } else {
-                    throw new Error('No hay contenido para procesar y el archivo no es un PDF válido.');
-                }
+            if (hasPdf) {
+                isPdfExtraction = true;
+                payload = {
+                    action: 'extract_and_structure_pdf',
+                    doc_id: selectedDoc.id,
+                    pdf_url: selectedDoc.url,
+                    nombre: selectedDoc.nombre,
+                    carpeta: selectedDoc.carpeta || 'General'
+                };
             } else {
+                // Si no hay PDF, usamos el contenido de texto que tengamos
+                const { data: docData } = await supabase.schema('nutricionista').from('documentos').select('contenido').eq('id', selectedDoc.id).single();
+                const rawContent = docData?.contenido || joinBlocks(tarjetas);
+                
+                if (!rawContent) throw new Error('No hay contenido ni PDF para procesar.');
+                
                 payload = { 
                     action: 'structure', 
                     content: rawContent, 
@@ -513,7 +516,7 @@ const DocumentEditor = () => {
             }
 
             // 2. Llamar a n8n
-            const targetUrl = payload.action === 'extract_and_structure_pdf' 
+            const targetUrl = isPdfExtraction 
                 ? 'https://cerebro.agencialquimia.com/webhook/cerebro-procesar-pdf'
                 : import.meta.env.PUBLIC_N8N_CEREBRO_URL;
 
