@@ -12,8 +12,6 @@ import { Brain, CheckCircle, ChevronRight } from 'lucide-react';
  * Renders document content as interactive cards with a collapsible section index.
  * Content is fetched from the 'tarjetas' table using the document ID.
  */
-import AIStudyButton from './AIStudyButton.jsx';
-
 const LessonContentViewer = ({ docId, unitName, moduleName }) => {
     const [blocks, setBlocks] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -147,9 +145,6 @@ Recuerda: NO TE SALGAS DE ESTE TEXTO Y RESPONDE SIEMPRE EN ESPAÑOL.`;
                 </div>
                 
                 <nav className="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                    <div className="mb-6">
-                        <AIStudyButton variant="black" />
-                    </div>
                     {blocks.map((block, i) => (
                         <button 
                             key={block.id}

@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import ChatSidebar from '../../components/ChatSidebar';
 import LessonContentViewer from '../../components/LessonContentViewer';
+import AIStudyButton from '../../components/AIStudyButton';
 import { getLibraryStructure } from '../../lib/books';
 import { supabase } from '../../lib/supabase';
 
@@ -89,15 +90,18 @@ const title = `${unitNombre.replace(/\.(pdf|PDF|docx|DOCX)$/, '')} | Alquimia`;
                 <!-- Los botones de PDF/Texto/Dividida han sido eliminados -->
             </div>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-6">
                  {pdfUrl && (
-                    <a href={pdfUrl} target="_blank" class="text-[10px] font-bold text-slate-400 hover:text-medical-green-600 transition-colors flex items-center gap-1.5">
+                    <a href={pdfUrl} target="_blank" class="text-[10px] font-bold text-slate-400 hover:text-medical-green-600 transition-colors flex items-center gap-1.5 shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
                         NUEVA PESTAÑA
                     </a>
                  )}
+                 <div class="scale-90 origin-right">
+                    <AIStudyButton client:load variant="black" />
+                 </div>
             </div>
         </nav>
 
