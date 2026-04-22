@@ -20,8 +20,22 @@ const LessonContentViewer = ({ docId, unitName, moduleName }) => {
     const [isInnerSidebarOpen, setIsInnerSidebarOpen] = useState(true);
     const [completedCardIds, setCompletedCardIds] = useState(new Set());
     const [activeTestingCardId, setActiveTestingCardId] = useState(null);
-    const { messages, sendMessage, setTestActive } = useChatStore();
+    const { messages, sendMessage, setTestActive, highlights } = useChatStore();
     const cardRefs = useRef({});
+
+    const highlightContent = (content) => {
+        if (!highlights || highlights.length === 0) return content;
+        
+        let processed = content;
+        highlights.forEach(phrase => {
+            if (!phrase || phrase.length < 5) return;
+            // Escapar carácteres especiales para evitar errores en markdown
+            const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp(`(${escaped})`, 'gi');
+            processed = processed.replace(regex, '<mark class="bg-yellow-300 text-slate-950 px-0.5 rounded-sm font-bold shadow-sm">$1</mark>');
+        });
+        return processed;
+    };
 
     useEffect(() => {
         if (docId) {
@@ -290,7 +304,7 @@ Recuerda: NO TE SALGAS DE ESTE TEXTO Y RESPONDE SIEMPRE EN ESPAÑOL.`;
                                                         remarkPlugins={[remarkGfm, remarkBreaks]}
                                                         rehypePlugins={[rehypeRaw]}
                                                     >
-                                                        {block.contenido}
+                                                        {highlightContent(block.contenido)}
                                                     </ReactMarkdown>
                                                 </div>
                                             </div>
