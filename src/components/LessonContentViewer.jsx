@@ -29,10 +29,21 @@ const LessonContentViewer = ({ docId, unitName, moduleName }) => {
         let processed = content;
         highlights.forEach(phrase => {
             if (!phrase || phrase.length < 5) return;
-            // Escapar carácteres especiales para evitar errores en markdown
-            const escaped = phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp(`(${escaped})`, 'gi');
-            processed = processed.replace(regex, '<mark class="bg-yellow-300 text-slate-950 px-0.5 rounded-sm font-bold shadow-sm">$1</mark>');
+            
+            // Creamos un patrón que permite asteriscos o guiones bajos opcionales entre y dentro de las palabras
+            // Esto es crucial porque el texto original puede tener markdown (**negrita**) que la IA no envía literal
+            const words = phrase.split(/\s+/);
+            const regexStr = words.map(word => {
+                const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                return `[\\*_]*${escaped}[\\*_]*`;
+            }).join('\\s+');
+
+            try {
+                const regex = new RegExp(`(${regexStr})`, 'gi');
+                processed = processed.replace(regex, '<mark class="bg-yellow-300 text-slate-950 px-0.5 rounded-sm font-bold shadow-sm">$1</mark>');
+            } catch (e) {
+                console.error("Regex highlight error:", e);
+            }
         });
         return processed;
     };

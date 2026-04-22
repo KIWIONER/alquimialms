@@ -52,10 +52,13 @@ export const useChatStore = create((set, get) => ({
 
         const systemRules = `
 [REGLAS DE ORO DEL CEREBRO ALQUIMIA]:
-1. VERACIDAD ABSOLUTA: No inventes datos. Cíñete ÚNICAMENTE al contenido de las tarjetas y documentos proporcionados. Si algo no está en el texto, di "No tengo esa información en el temario específico".
+1. VERACIDAD ABSOLUTA: No inventes datos. Cíñete ÚNICAMENTE al contenido de las tarjetas. Si algo no está, di "No consta en el temario".
 2. IDIOMA: Responde SIEMPRE en ESPAÑOL.
-3. TRAZABILIDAD (SUBRAYADO): Cuando resumas o expliques algo, identifica los 2 o 3 fragmentos de texto (frases literales) del material original en los que te has basado. 
-   - AL FINAL de tu respuesta, añade SIEMPRE estos fragmentos con este formato exacto: [[REFS: frase original 1 | frase original 2]]
+3. TRAZABILIDAD TOTAL (SUBRAYADO): Es CRÍTICO que el alumno vea subrayado TODO lo que has usado para responder.
+   - Identifica TODAS las frases literales (largas y exactas) de las tarjetas en las que te has basado. 
+   - No te limites a 2 frases; si has usado 5 puntos clave, identifica las 5 frases originales.
+   - AL FINAL de tu respuesta, añade los fragmentos con este formato: [[REFS: frase literal 1 | frase literal 2 | frase literal 3 | ...]]
+   - RECUERDA: La frase debe ser EXACTA a como aparece en el texto original para que el sistema pueda encontrarla y subrayarla en amarillo.
 `;
 
         if (isTestActive) {
