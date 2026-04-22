@@ -732,20 +732,16 @@ const DocumentEditor = () => {
             {/* CABECERA GLOBAL INTEGRADA */}
             <header className="h-20 border-b border-slate-100 bg-white flex items-center px-10 justify-between shrink-0 z-[110] shadow-sm sticky top-0">
                 <div className="flex items-center gap-6">
-                    <a href="/dashboard" className="flex items-center gap-2 text-slate-400 hover:text-medical-green-600 transition-all group/back">
-                        <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center group-hover/back:bg-medical-green-50 transition-all">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                    <a href="/dashboard" className="flex items-center gap-4 group/back">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center text-3xl shadow-sm group-hover/back:scale-110 transition-all">🏺</div>
+                        <div className="flex flex-col">
+                            <h1 className="font-extrabold text-lg tracking-tight text-slate-800 leading-none">Admin <span className="text-medical-green-500 italic">Editor</span></h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">En línea</span>
+                            </div>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] hidden lg:block">Panel de Control</span>
                     </a>
-                    <div className="w-px h-6 bg-slate-100 mx-2"></div>
-                    <div className="flex flex-col">
-                        <h1 className="font-extrabold text-lg tracking-tight text-slate-800 leading-none">Admin <span className="text-medical-green-500 italic">Editor</span></h1>
-                        <div className="flex items-center gap-2 mt-1">
-                            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                            <span className="text-[9px] font-black uppercase text-slate-400 tracking-widest">En línea</span>
-                        </div>
-                    </div>
                 </div>
 
                 {/* TEXT TOOLS - CENTRADOS */}
