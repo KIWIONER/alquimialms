@@ -28,7 +28,10 @@ const AdminProtectedRoute = ({ children }) => {
     const [isAdmin, setIsAdmin] = useState(null);
 
     useEffect(() => {
-        if (!session) return;
+        if (!session) {
+            setIsAdmin(null);
+            return;
+        }
 
         // 1. Bypass directo para el dueño del proyecto
         if (['matiasidiartviera@gmail.com', 'director@agencialquimia.com'].includes(session.user.email)) {
@@ -45,13 +48,19 @@ const AdminProtectedRoute = ({ children }) => {
         checkAdmin();
     }, [session]);
 
-    if (loading || (session && isAdmin === null)) return (
+    if (loading) return (
         <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950">
              <div className="w-16 h-16 border-4 border-medical-green-500 border-t-transparent rounded-full animate-spin"></div>
         </div>
     );
 
     if (!session) return <LoginForm onLogin={setSession} />;
+
+    if (isAdmin === null) return (
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-950">
+             <div className="w-16 h-16 border-4 border-medical-green-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+    );
 
     if (!isAdmin) {
         return (
