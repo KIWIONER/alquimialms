@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Brain } from 'lucide-react';
-
-import { useChatStore } from '../store/chatStore';
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin } from 'lucide-react';
+import AIStudyButton from './AIStudyButton';
 
 const FullCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -195,13 +194,7 @@ const FullCalendar = () => {
 
         {/* Lado Derecho: Acción IA */}
         <div className="flex justify-end">
-            <button 
-                onClick={openChat}
-                className="flex items-center gap-3 px-8 py-3.5 bg-medical-green-500 text-white rounded-[2rem] text-xs font-black uppercase tracking-widest hover:bg-medical-green-600 transition-all shadow-xl shadow-medical-green-500/20 active:scale-95"
-            >
-                <Brain size={18} />
-                Estudia con IA
-            </button>
+            <AIStudyButton />
         </div>
       </div>
 
