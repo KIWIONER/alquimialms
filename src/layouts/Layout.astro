@@ -4,6 +4,7 @@ import { ClientRouter } from 'astro:transitions';
 import SidebarHierarchy from '../components/SidebarHierarchy.astro';
 import ChatDrawer from '../components/ChatDrawer.jsx';
 import AIStudyButton from '../components/AIStudyButton.jsx';
+import SidebarCollapseButton from '../components/SidebarCollapseButton.jsx';
 
 interface Props {
 	title: string;
@@ -80,7 +81,12 @@ const navLinks = [
 		<main class="flex flex-1 overflow-hidden">
 			<!-- Left Pane: Hierarchical Sidebar -->
 			{showSidebars && (
-				<aside class="w-[360px] shrink-0 z-40 shadow-xl shadow-slate-200/50 bg-white flex flex-col" transition:name="sidebar-left">
+				<aside 
+                    id="primary-sidebar"
+                    class="w-[360px] shrink-0 z-40 shadow-xl shadow-slate-200/50 bg-white flex flex-col relative transition-all duration-500 ease-in-out overflow-visible" 
+                    transition:name="sidebar-left"
+                >
+                    <SidebarCollapseButton client:load />
 					<SidebarHierarchy />
                     <slot name="sidebar-left" />
 				</aside>
