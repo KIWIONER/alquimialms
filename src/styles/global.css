@@ -72,6 +72,19 @@
   background-color: #fafafa;
 }
 
+/* ------------------------------------------ */
+/* Sidebar Collapse Styles                    */
+/* ------------------------------------------ */
+.sidebar-collapsed > *:not(button) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.3s ease-in-out;
+}
+
+#primary-sidebar {
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1), min-width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
 /* Custom scrollbar for high performance look */
 ::-webkit-scrollbar {
   width: 6px;
