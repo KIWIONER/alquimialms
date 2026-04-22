@@ -19,24 +19,32 @@ const FullCalendar = () => {
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
 
+  const getWeekTitle = () => {
+    const startOfWeek = new Date(currentDate);
+    const day = startOfWeek.getDay();
+    const diff = (day === 0 ? -6 : 1 - day);
+    startOfWeek.setDate(startOfWeek.getDate() + diff);
+    return `Semana del ${startOfWeek.getDate()} de ${monthNames[startOfWeek.getMonth()]}`;
+  };
+
   const handlePrev = () => {
+    const newDate = new Date(currentDate);
     if (viewMode === 'month') {
-      setCurrentDate(new Date(year, month - 1, 1));
+      newDate.setMonth(newDate.getMonth() - 1);
     } else {
-      const prevWeek = new Date(currentDate);
-      prevWeek.setDate(prevWeek.getDate() - 7);
-      setCurrentDate(prevWeek);
+      newDate.setDate(newDate.getDate() - 7);
     }
+    setCurrentDate(newDate);
   };
 
   const handleNext = () => {
+    const newDate = new Date(currentDate);
     if (viewMode === 'month') {
-      setCurrentDate(new Date(year, month + 1, 1));
+      newDate.setMonth(newDate.getMonth() + 1);
     } else {
-      const nextWeek = new Date(currentDate);
-      nextWeek.setDate(nextWeek.getDate() + 7);
-      setCurrentDate(nextWeek);
+      newDate.setDate(newDate.getDate() + 7);
     }
+    setCurrentDate(newDate);
   };
 
   // Eventos enriquecidos
@@ -177,7 +185,7 @@ const FullCalendar = () => {
                     <ChevronLeft size={20} />
                 </button>
                 <div className="px-8 text-xs font-black uppercase tracking-[0.2em] min-w-[200px] text-center">
-                    {viewMode === 'month' ? `${monthNames[month]} ${year}` : `Semana de ${tempDate = new Date(currentDate), tempDate.setDate(tempDate.getDate() + (tempDate.getDay() === 0 ? -6 : 1 - tempDate.getDay())), monthNames[tempDate.getMonth()]}`}
+                    {viewMode === 'month' ? `${monthNames[month]} ${year}` : getWeekTitle()}
                 </div>
                 <button onClick={handleNext} className="p-3 hover:bg-white/10 rounded-full transition-all">
                     <ChevronRight size={20} />
