@@ -104,6 +104,24 @@ const LessonContentViewer = ({ docId, unitName, moduleName }) => {
         }
     };
 
+    const handleSummaryClick = async (block) => {
+        const prompt = `¡Hola Cerebro! Por favor, haz un resumen magistral, técnico y muy conciso de esta tarjeta titulada "${block.titulo}". 
+        
+        Tu objetivo es:
+        1. Resumir lo esencial en 2 o 3 párrafos pedagógicos.
+        2. OBLIGATORIO: Identificar y listar TODAS las frases literales clave para el sistema de subrayado [[REFS]].
+        
+        Contenido de la tarjeta:
+        ${block.contenido}`;
+
+        // Enviamos en modo oculto (isHidden) para que el alumno vea solo el aviso y luego la respuesta
+        await sendMessage(prompt, {
+            current_slug: unitName,
+            isHidden: true,
+            blockContent: block.contenido
+        });
+    };
+
     const handleTestClick = async (block) => {
         // Marcamos como "En Progreso"
         setActiveTestingCardId(block.id);
@@ -245,20 +263,31 @@ Recuerda: NO TE SALGAS DE ESTE TEXTO Y RESPONDE SIEMPRE EN ESPAÑOL.`;
                                     </div>
 
                                     {!isIndexCard && (
-                                        <button 
-                                            onClick={() => handleTestClick(block)}
-                                            disabled={isCompleted || isTesting}
-                                            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
-                                                isCompleted
-                                                    ? 'bg-medical-green-200 text-medical-green-600 cursor-default px-6'
-                                                    : isTesting
-                                                        ? 'bg-amber-200 text-amber-700 cursor-default'
-                                                        : 'bg-white border border-slate-200 text-slate-500 hover:border-medical-green-500 hover:text-medical-green-600 hover:bg-medical-green-50 shadow-sm'
-                                            }`}
-                                        >
-                                            <Brain size={14} className={isCompleted || isTesting ? 'hidden' : 'text-medical-green-500'} />
-                                            {isCompleted ? 'Test Completado' : isTesting ? 'Realizando Test...' : 'Hacer Test de Autoevaluación'}
-                                        </button>
+                                        <div className="flex items-center gap-2">
+                                            <button 
+                                                onClick={() => handleSummaryClick(block)}
+                                                disabled={loading}
+                                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 shadow-sm"
+                                            >
+                                                <Brain size={14} className="text-amber-500" />
+                                                Resumir
+                                            </button>
+
+                                            <button 
+                                                onClick={() => handleTestClick(block)}
+                                                disabled={isCompleted || isTesting}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
+                                                    isCompleted
+                                                        ? 'bg-medical-green-200 text-medical-green-600 cursor-default px-6'
+                                                        : isTesting
+                                                            ? 'bg-medical-green-100 text-medical-green-700 cursor-default'
+                                                            : 'bg-white border border-slate-200 text-slate-500 hover:border-medical-green-500 hover:text-medical-green-600 hover:bg-medical-green-50 shadow-sm'
+                                                }`}
+                                            >
+                                                <CheckCircle size={14} className={isCompleted || isTesting ? 'hidden' : 'text-slate-400'} />
+                                                {isCompleted ? 'Completado' : isTesting ? 'En Test...' : 'Hacer Test'}
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
 

@@ -47,8 +47,11 @@ export const useChatStore = create((set, get) => ({
 
         // 1. Añadimos el mensaje del usuario al estado
         if (context.isHidden) {
-            // Si es oculto (como el prompt del test), mandamos un aviso visual amigable
-            addMessage({ role: 'system_info', content: 'Generando test de autoevaluación...' });
+            // Si es oculto, mandamos un aviso visual amigable dependiendo del tipo de petición
+            const systemMsg = context.isTestRequest 
+                ? 'Generando test de autoevaluación...' 
+                : 'Generando resumen y subrayado de la tarjeta...';
+            addMessage({ role: 'system_info', content: systemMsg });
         } else {
             addMessage({ role: 'user', content: text });
         }
