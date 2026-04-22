@@ -63,7 +63,8 @@ export const useChatStore = create((set, get) => ({
 [REGLAS DE ORO DEL CEREBRO ALQUIMIA]:
 1. VERACIDAD ABSOLUTA: No inventes datos. Cíñete ÚNICAMENTE al contenido de las tarjetas. Si algo no está, di "No consta en el temario".
 2. IDIOMA: Responde SIEMPRE en ESPAÑOL.
-3. TRAZABILIDAD TOTAL (SUBRAYADO): Es CRÍTICO que el alumno vea subrayado TODO lo que has usado para responder.
+3. FORMATO: Usa EXCLUSIVAMENTE Markdown. ¡PROHIBIDO usar etiquetas HTML como <ins>, <u>, <b> o <br>! Usa **negrita** o *cursiva* de markdown.
+4. TRAZABILIDAD TOTAL (SUBRAYADO): Es CRÍTICO que el alumno vea subrayado TODO lo que has usado para responder.
    - Identifica TODAS las frases literales (largas y exactas) de las tarjetas en las que te has basado. 
    - No te limites a 2 frases; si has usado 5 puntos clave, identifica las 5 frases originales.
    - AL FINAL de tu respuesta, añade los fragmentos con este formato: [[REFS: frase literal 1 | frase literal 2 | frase literal 3 | ...]]
