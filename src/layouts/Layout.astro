@@ -82,12 +82,12 @@ const navLinks = [
 		<main class="flex flex-1 overflow-hidden">
 			<!-- Left Pane: Hierarchical Sidebar -->
 			{showSidebars && (
-				<aside 
+                <aside 
                     id="primary-sidebar"
                     class="w-[360px] shrink-0 z-40 shadow-xl shadow-slate-200/50 bg-white flex flex-col relative transition-all duration-500 ease-in-out overflow-visible" 
                     transition:name="sidebar-left"
                 >
-                    {!disableCollapse && <SidebarCollapseButton client:load />}
+                    <SidebarCollapseButton client:load hideButton={disableCollapse} />
 					<SidebarHierarchy />
                     <slot name="sidebar-left" />
 				</aside>

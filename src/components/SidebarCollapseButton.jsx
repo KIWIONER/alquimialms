@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useUIStore } from '../store/uiStore';
 
-const SidebarCollapseButton = () => {
+const SidebarCollapseButton = ({ hideButton = false }) => {
     const { isLeftSidebarOpen, toggleLeftSidebar } = useUIStore();
 
     useEffect(() => {
@@ -19,6 +19,8 @@ const SidebarCollapseButton = () => {
             }
         }
     }, [isLeftSidebarOpen]);
+
+    if (hideButton) return null;
 
     return (
         <button 
