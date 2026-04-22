@@ -5,7 +5,8 @@ import remarkBreaks from 'remark-breaks';
 import rehypeRaw from 'rehype-raw';
 import { supabase } from '../lib/supabase';
 import { useChatStore } from '../store/chatStore';
-import { Brain, CheckCircle, ChevronRight } from 'lucide-react';
+import { useUIStore } from '../store/uiStore';
+import { Brain, CheckCircle } from 'lucide-react';
 
 /**
  * LESSON CONTENT VIEWER (Student Side)
@@ -13,9 +14,10 @@ import { Brain, CheckCircle, ChevronRight } from 'lucide-react';
  * Content is fetched from the 'tarjetas' table using the document ID.
  */
 const LessonContentViewer = ({ docId, unitName, moduleName }) => {
+    const { isLeftSidebarOpen, toggleLeftSidebar } = useUIStore();
     const [blocks, setBlocks] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+    const [isInnerSidebarOpen, setIsInnerSidebarOpen] = useState(true);
     const [completedCardIds, setCompletedCardIds] = useState(new Set());
     const [activeTestingCardId, setActiveTestingCardId] = useState(null);
     const { messages, sendMessage, setTestActive } = useChatStore();
@@ -124,20 +126,20 @@ Recuerda: NO TE SALGAS DE ESTE TEXTO Y RESPONDE SIEMPRE EN ESPAÑOL.`;
     return (
         <div className="flex h-full w-full bg-slate-100/30 overflow-hidden relative">
             
-            {/* 1. Toggle Button for Sidebar (Floating) */}
+            {/* 1. Toggle Button for Primary Sidebar (Floating) */}
             <button 
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className={`absolute left-4 top-4 z-40 p-2.5 bg-white rounded-xl shadow-md border border-slate-200 text-slate-400 hover:text-medical-green-600 transition-all ${isSidebarOpen ? 'translate-x-[260px]' : 'translate-x-0'}`}
-                title={isSidebarOpen ? "Cerrar índice" : "Abrir índice de temas"}
+                onClick={toggleLeftSidebar}
+                className={`absolute left-4 top-4 z-40 p-2.5 bg-white rounded-full shadow-md border border-slate-200 text-slate-400 hover:text-medical-green-600 transition-all hover:scale-110 active:scale-95 ${isLeftSidebarOpen ? 'translate-x-0' : 'translate-x-0'}`}
+                title={isLeftSidebarOpen ? "Cerrar menú lateral" : "Abrir menú lateral"}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 transition-transform duration-300 ${isLeftSidebarOpen ? '' : 'rotate-180'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
                 </svg>
             </button>
 
-            {/* 2. Section Navigation Sidebar */}
+            {/* 2. Section Navigation Sidebar (Inner) */}
             <aside 
-                className={`fixed md:relative z-30 h-full bg-white border-r border-slate-200 transition-all duration-300 ease-in-out shadow-2xl md:shadow-none flex flex-col ${isSidebarOpen ? 'w-[280px] opacity-100' : 'w-0 opacity-0 -translate-x-full md:translate-x-0'}`}
+                className={`fixed md:relative z-30 h-full bg-white border-r border-slate-200 transition-all duration-300 ease-in-out shadow-2xl md:shadow-none flex flex-col ${isInnerSidebarOpen ? 'w-[280px] opacity-100' : 'w-0 opacity-0 -translate-x-full md:translate-x-0'}`}
             >
                 <div className="p-6 pt-20 border-b border-slate-50">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Navegación</span>
@@ -256,7 +258,7 @@ Recuerda: NO TE SALGAS DE ESTE TEXTO Y RESPONDE SIEMPRE EN ESPAÑOL.`;
                                                         </div>
                                                         <div className="w-8 h-8 rounded-full bg-white border border-slate-100 flex items-center justify-center group-hover/btn:bg-medical-green-500 group-hover/btn:border-medical-green-500 transition-all">
                                                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-slate-400 group-hover/btn:text-white transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 5l7 7-7 7" />
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
                                                             </svg>
                                                         </div>
                                                     </button>
