@@ -40,7 +40,7 @@ const LessonContentViewer = ({ docId, unitName, moduleName }) => {
 
             try {
                 const regex = new RegExp(`(${regexStr})`, 'gi');
-                processed = processed.replace(regex, '<mark class="bg-yellow-300 text-slate-950 px-0.5 rounded-sm font-bold shadow-sm">$1</mark>');
+                processed = processed.replace(regex, '<mark class="bg-yellow-200/70 text-slate-900 px-0.5 rounded-sm font-semibold transition-colors duration-1000">$1</mark>');
             } catch (e) {
                 console.error("Regex highlight error:", e);
             }
