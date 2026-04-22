@@ -57,6 +57,8 @@ const LoginForm = ({ onLogin }) => {
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Email de Administrador</label>
                         <input 
                             type="email" 
+                            name="email"
+                            autoComplete="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
@@ -68,6 +70,8 @@ const LoginForm = ({ onLogin }) => {
                         <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Contraseña Mestra</label>
                         <input 
                             type="password" 
+                            name="password"
+                            autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
