@@ -6,7 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import { supabase } from '../lib/supabase';
 import { useChatStore } from '../store/chatStore';
 import { useUIStore } from '../store/uiStore';
-import { Brain, CheckCircle } from 'lucide-react';
+import { Brain, CheckCircle, Highlighter, ClipboardList } from 'lucide-react';
 
 /**
  * LESSON CONTENT VIEWER (Student Side)
@@ -19,66 +19,104 @@ const LessonContentViewer = ({ docId, unitName, moduleName }) => {
     const [loading, setLoading] = useState(true);
     const [isInnerSidebarOpen, setIsInnerSidebarOpen] = useState(true);
     const [completedCardIds, setCompletedCardIds] = useState(new Set());
-    const [activeTestingCardId, setActiveTestingCardId] = useState(null);
-    const { messages, sendMessage, setTestActive, highlights, activeHighlightCardId } = useChatStore();
+    const [highlightModeCardId, setHighlightModeCardId] = useState(null); // Tarjeta en modo subrayado manual
+
+    const {
+        messages, sendMessage,
+        cardHighlights, clearCardHighlights,
+        summarizedCardIds, markCardSummarized,
+        isTestActive, activeTestingCardId, endTest,
+        loading: chatLoading
+    } = useChatStore();
     const cardRefs = useRef({});
 
-    const highlightContent = (content, cardHighlights) => {
-        if (!cardHighlights || cardHighlights.length === 0) return content;
+    // Refs para acceder al DOM renderizado de cada tarjeta y aplicar highlights directamente
+    const contentRefs = useRef({});
 
-        // ── Expandir frases: completas + sub-frases por coma + ventanas de 3 palabras ──
-        // Esto garantiza cobertura amplia aunque la IA parafrasee ligeramente.
-        const matchTargets = new Set();
-        cardHighlights.forEach(phrase => {
-            if (!phrase || phrase.length < 5) return;
-            matchTargets.add(phrase);
+    // ── Aplica highlights directamente en el DOM con soporte de selección cross-nodo ──
+    // Incluye TODOS los nodos de texto (incluso dentro de <mark>) para que los offsets
+    // coincidan con lo que el usuario ve y con lo que selection.toString() devuelve.
+    const applyHighlightsToDOM = (container, highlights) => {
+        if (!container || !highlights || highlights.length === 0) return;
 
-            // Sub-frases separadas por coma o punto y coma
-            phrase.split(/[,;]/).forEach(sub => {
-                const t = sub.trim();
-                if (t.length >= 10) matchTargets.add(t);
+        highlights.forEach(({ text: phrase, occurrence = 0 }) => {
+            if (!phrase || phrase.length < 1) return;
+
+            // 1. Índice de TODOS los nodos de texto (sin excluir los ya marcados)
+            const textNodes = [];
+            let totalOffset = 0;
+            const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+            let node;
+            while ((node = walker.nextNode())) {
+                const len = node.textContent.length;
+                textNodes.push({ node, start: totalOffset, end: totalOffset + len });
+                totalOffset += len;
+            }
+
+            // 2. Texto completo = lo mismo que selection.toString() y preRange.toString()
+            const fullText  = textNodes.map(t => t.node.textContent).join('');
+            const lowerFull = fullText.toLowerCase();
+            const lowerPhrase = phrase.toLowerCase();
+
+            // 3. Encontrar la ocurrencia N
+            let count = 0, matchStart = -1, pos = 0;
+            while (true) {
+                const idx = lowerFull.indexOf(lowerPhrase, pos);
+                if (idx === -1) break;
+                if (count === occurrence) { matchStart = idx; break; }
+                count++; pos = idx + 1;
+            }
+            if (matchStart === -1) return;
+            const matchEnd = matchStart + phrase.length;
+
+            // 4. Nodos afectados
+            const affected = textNodes.filter(t => t.end > matchStart && t.start < matchEnd);
+            if (affected.length === 0) return;
+
+            // 5. Aplicar marks en orden inverso (para no desplazar offsets)
+            [...affected].reverse().forEach(({ node: n, start: ns }) => {
+                const nodeText = n.textContent || '';
+                const localStart = Math.max(0, matchStart - ns);
+                const localEnd   = Math.min(nodeText.length, matchEnd - ns);
+                const match = nodeText.slice(localStart, localEnd);
+                if (!match) return;
+
+                // Si ya está dentro de un <mark>, no hace falta re-envolver
+                if (n.parentElement?.tagName === 'MARK') return;
+
+                const before = nodeText.slice(0, localStart);
+                const after  = nodeText.slice(localEnd);
+
+                const mark = document.createElement('mark');
+                mark.style.cssText = 'background-color:#fef08a;color:#000;border-radius:2px;padding:0 2px;';
+                mark.textContent = match;
+
+                const parent = n.parentNode;
+                if (before) parent.insertBefore(document.createTextNode(before), n);
+                parent.insertBefore(mark, n);
+                if (after)  parent.insertBefore(document.createTextNode(after), n);
+                parent.removeChild(n);
             });
-
-            // Ventanas deslizantes de 3 palabras consecutivas
-            const rawWords = phrase.replace(/[*_`]/g, '').split(/\s+/).filter(w => w.length > 2);
-            for (let i = 0; i <= rawWords.length - 3; i++) {
-                matchTargets.add(rawWords.slice(i, i + 3).join(' '));
-            }
         });
-
-        // Ordenar de mayor a menor para que las frases largas ganen prioridad
-        const sorted = [...matchTargets].sort((a, b) => b.length - a.length);
-
-        let processed = content;
-
-        sorted.forEach(phrase => {
-            if (!phrase || phrase.length < 5) return;
-
-            const cleanPhrase = phrase.replace(/[.?¿!¡(),;:]/g, '').trim();
-            const words = cleanPhrase.split(/\s+/).filter(w => w.length > 2);
-            if (words.length < 2) return;
-
-            // Entre palabras permitimos hasta 5 caracteres arbitrarios (sin salto de línea)
-            // para absorber puntuación, tildes, asteriscos de markdown, etc.
-            const regexStr = words.map(word => {
-                const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                return `[*_]{0,2}${escaped}[*_]{0,2}`;
-            }).join('[^\n]{0,6}');
-
-            try {
-                const regex = new RegExp(`(${regexStr})`, 'gi');
-                // Color pastel suave: amarillo muy claro con subrayado tenue, texto en negro
-                processed = processed.replace(regex, (match) => {
-                    if (match.includes('<mark')) return match; // no re-envolver
-                    return `<mark style="background-color:#fefce8;color:#000000;border-bottom:1.5px solid #fde68a;border-radius:2px;padding:0 2px;">${match}</mark>`;
-                });
-            } catch (e) {
-                // silencioso — regex malformado por un edge case, simplemente lo saltamos
-            }
-        });
-
-        return processed;
     };
+
+    // Re-aplica todos los highlights en el DOM después de cada render
+    useEffect(() => {
+        blocks.forEach(block => {
+            const container = contentRefs.current[block.id];
+            const highlights = cardHighlights[block.id];
+            if (container && highlights?.length > 0) {
+                // Primero limpiamos marks existentes (por si el componente re-renderizó)
+                container.querySelectorAll('mark').forEach(mark => {
+                    const parent = mark.parentNode;
+                    while (mark.firstChild) parent.insertBefore(mark.firstChild, mark);
+                    parent.removeChild(mark);
+                });
+                container.normalize(); // fusionar texto adyacente
+                applyHighlightsToDOM(container, highlights);
+            }
+        });
+    }); // sin dependencias: se ejecuta tras CADA render
 
     useEffect(() => {
         if (docId) {
@@ -86,17 +124,17 @@ const LessonContentViewer = ({ docId, unitName, moduleName }) => {
         }
     }, [docId]);
 
-    // Listener para detectar cuando el test termina vía tag oculto de la IA
+    // Detectar fin de test: marcar tarjeta como completada
     useEffect(() => {
-        if (activeTestingCardId && messages.length > 0) {
-            const lastMsg = messages[messages.length - 1];
-            if (lastMsg.role === 'assistant' && lastMsg.content.includes('[[COMPLETADO]]')) {
-                setCompletedCardIds(prev => new Set([...prev, activeTestingCardId]));
-                setActiveTestingCardId(null);
-                setTestActive(false);
+        if (activeTestingCardId && !isTestActive && completedCardIds.has(activeTestingCardId) === false) {
+            // El store ya puso isTestActive=false vía endTest()
+            // Solo necesitamos reflejar eso en el estado local
+            const wasTestingCard = activeTestingCardId;
+            if (wasTestingCard) {
+                setCompletedCardIds(prev => new Set([...prev, wasTestingCard]));
             }
         }
-    }, [messages, activeTestingCardId]);
+    }, [isTestActive, activeTestingCardId]);
 
     const fetchTarjetas = async () => {
         setLoading(true);
@@ -128,30 +166,15 @@ const LessonContentViewer = ({ docId, unitName, moduleName }) => {
         }
     };
 
+    // ── RESUMIR: solo chat, sin highlights, un solo uso ──
     const handleSummaryClick = async (block) => {
-        console.log("📝 Resumiendo bloque:", block.titulo, block.id);
-        setTestActive(false);
-
-        // Calculamos la longitud del texto original para fijar el límite
+        if (summarizedCardIds.includes(block.id)) return; // ya resumida
         const originalWordCount = block.contenido.split(/\s+/).filter(Boolean).length;
         const maxWords = Math.max(40, Math.floor(originalWordCount * 0.35));
-
-        const prompt = `[RESUMEN ESTRICTO - TARJETA ESPECÍFICA: "${block.titulo}" (ID: ${block.id})]
-
-REGLAS ABSOLUTAS (incumplirlas es un error crítico):
-1. FOCO EXCLUSIVO: Estás resumiendo ÚNICAMENTE la tarjeta "${block.titulo}". No menciones contenido de otras secciones.
-2. BREVEDAD MÁXIMA: Tu resumen NO puede superar ${maxWords} palabras. El texto original tiene ${originalWordCount} palabras. Tu resumen debe ser SIGNIFICATIVAMENTE más corto. Escribe SOLO 3-5 frases clave que capturen la esencia.
-3. USA ÚNICAMENTE el texto que te doy abajo. Cero información externa, cero elaboración propia.
-4. SUBRAYADO MASIVO (OBLIGATORIO): Extrae entre 15 y 20 frases literales del texto original para el tag [[REFS]]. El alumno quiere ver la mayoría de la tarjeta subrayada en amarillo.
-
-TEXTO ORIGINAL DE "${block.titulo}":
+        const prompt = `Resume ÚNICAMENTE la tarjeta "${block.titulo}" en máximo ${maxWords} palabras. Usa SOLO el siguiente texto, sin añadir información externa:
 """
 ${block.contenido}
-"""
-
-Escribe el resumen de "${block.titulo}" (máximo ${maxWords} palabras) y termina con: [[REFS: frase literal 1 | frase literal 2 | ... | frase literal 20]]`;
-
-        // Enviamos en modo oculto (isHidden)
+"""`;
         await sendMessage(prompt, {
             current_slug: unitName,
             isHidden: true,
@@ -161,40 +184,94 @@ Escribe el resumen de "${block.titulo}" (máximo ${maxWords} palabras) y termina
         });
     };
 
+    // ── SUBRAYAR: toggle de modo manual ──
+    const handleHighlightToggle = (block) => {
+        // Toggle modo subrayado
+        setHighlightModeCardId(prev => prev === block.id ? null : block.id);
+    };
+
+    // Se dispara cuando el usuario suelta el ratón sobre el contenido de una tarjeta
+    const handleContentMouseUp = (block, e) => {
+        if (highlightModeCardId !== block.id) return;
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+        const selectedText = selection.toString().trim();
+        if (!selectedText || selectedText.length < 2) return;
+
+        // ── Determinar qué ocurrencia (0-indexed) seleccionó el usuario ──
+        // Contamos cuántas veces aparece la frase ANTES del inicio de la selección
+        // en el texto renderizado del DOM.
+        let occurrence = 0;
+        try {
+            const range = selection.getRangeAt(0);
+            const contentDiv = e.currentTarget;
+            const preRange = document.createRange();
+            preRange.selectNodeContents(contentDiv);
+            preRange.setEnd(range.startContainer, range.startOffset);
+            const textBefore = preRange.toString().toLowerCase();
+            const lowerPhrase = selectedText.toLowerCase();
+            let pos = 0;
+            while (true) {
+                const found = textBefore.indexOf(lowerPhrase, pos);
+                if (found === -1) break;
+                occurrence++;
+                pos = found + 1;
+            }
+        } catch (_) {}
+
+        const current = useChatStore.getState().cardHighlights[block.id] || [];
+
+        if (e.ctrlKey) {
+            // Ctrl+Soltar → eliminar la frase que contenga o esté contenida en la selección
+            const sel = selectedText.toLowerCase();
+            const updated = current.filter(h => {
+                const phrase = (h.text || h).toLowerCase();
+                return !phrase.includes(sel) && !sel.includes(phrase);
+            });
+            useChatStore.getState().setCardHighlights(block.id, updated);
+        } else {
+            // Clic normal → añadir con índice de ocurrencia
+            const isDuplicate = current.some(h => (h.text || h) === selectedText && (h.occurrence ?? 0) === occurrence);
+            if (!isDuplicate) {
+                useChatStore.getState().setCardHighlights(block.id, [...current, { text: selectedText, occurrence }]);
+            }
+        }
+
+        selection.removeAllRanges();
+    };
+
+    // ── HACER TEST / CONTINUAR TEST ──
     const handleTestClick = async (block) => {
-        console.log("🧪 Generando test para bloque:", block.titulo, block.id);
-        // Marcamos como "En Progreso"
-        setActiveTestingCardId(block.id);
-        
-        // Enviamos el mensaje al chat con instrucciones precisas: 5 preguntas, FOCO ESTRICTO e IDIOMA ESPAÑOL
-        const prompt = `Por favor, genérame un mini-test interactivo de exactamente 5 preguntas técnicas sobre el contenido de esta sección específica titulada "${block.titulo}" (ID: ${block.id}). 
+        const isContinuation = isTestActive && activeTestingCardId === block.id;
 
-REGLAS CRÍTICAS DE FOCO E IDIOMA:
-1. HABLA SIEMPRE EN ESPAÑOL. Aunque el texto de la tarjeta esté en otro idioma, tus preguntas y feedback deben ser en castellano.
-2. BÁSTATE ÚNICAMENTE en el texto de abajo. No cites otras unidades, tarjetas o conocimiento general externo.
-3. Envía las preguntas de UNA EN UNA.
-4. Cada pregunta DEBE tener exactamente 4 opciones de respuesta (a, b, c, d).
-5. FORMATO OBLIGATORIO:
-   Pregunta X/5: [Pregunta]
-   a) [Opción]
-   b) [Opción]
-   c) [Opción]
-   d) [Opción]
-6. TRAS MI RESPUESTA: Dame feedback (si acerté o no y por qué) y **acto seguido envía la SIGUIENTE PREGUNTA**.
-7. ¡FINALIZACIÓN!: Justo después del feedback de la pregunta 5, escribe exactamente el tag [[COMPLETADO]] para cerrar el test.
+        if (isContinuation) {
+            // El test está activo en esta tarjeta → enviar continuación
+            await sendMessage('Continúa con la siguiente pregunta del test.', {
+                current_slug: unitName,
+                isTestContinuation: true,
+                isHidden: true,
+                targetBlockId: block.id
+            });
+        } else {
+            // Test nuevo
+            const prompt = `Genérame un mini-test de exactamente 5 preguntas sobre "${block.titulo}".
+REGLAS:
+1. SIEMPRE EN ESPAÑOL.
+2. USA SOLO el texto proporcionado.
+3. UNA pregunta a la vez, con 4 opciones (a/b/c/d).
+4. Tras mi respuesta: feedback breve + siguiente pregunta.
+5. Tras la pregunta 5: escribe [[COMPLETADO]].
 
-Contenido exclusivo de esta tarjeta:
-${block.contenido}
-
-Recuerda: NO TE SALGAS DE ESTE TEXTO Y RESPONDE SIEMPRE EN ESPAÑOL.`;
-        
-        // Enviamos el mensaje en modo oculto para no asustar al alumno con el prompt técnico
-        await sendMessage(prompt, {
-            current_slug: unitName,
-            isTestRequest: true,
-            isHidden: true,
-            blockContent: block.contenido
-        });
+Texto:
+${block.contenido}`;
+            await sendMessage(prompt, {
+                current_slug: unitName,
+                isTestRequest: true,
+                isHidden: true,
+                blockContent: block.contenido,
+                targetBlockId: block.id
+            });
+        }
     };
 
     if (loading) return (
@@ -275,7 +352,7 @@ Recuerda: NO TE SALGAS DE ESTE TEXTO Y RESPONDE SIEMPRE EN ESPAÑOL.`;
                         
                         return (
                             <section 
-                                key={`${block.id}-${highlights.length}-${activeHighlightCardId === block.id}`}
+                                key={`${block.id}-${JSON.stringify(cardHighlights[block.id])}`}
                                 ref={el => cardRefs.current[block.id] = el}
                                 className={`bg-white rounded-[2.5rem] border mb-10 overflow-hidden transition-all duration-500 shadow-xl group/card ${
                                     isCompleted 
@@ -303,36 +380,78 @@ Recuerda: NO TE SALGAS DE ESTE TEXTO Y RESPONDE SIEMPRE EN ESPAÑOL.`;
                                     </div>
 
                                     {!isIndexCard && (
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 flex-wrap">
                                             <button 
                                                 onClick={() => handleSummaryClick(block)}
-                                                disabled={loading}
-                                                className="flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300 shadow-sm"
-                                            >
-                                                <Brain size={14} className="text-amber-500" />
-                                                Resumir
-                                            </button>
-
-                                            <button 
-                                                onClick={() => handleTestClick(block)}
-                                                disabled={isCompleted || isTesting}
-                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all ${
-                                                    isCompleted
-                                                        ? 'bg-medical-green-200 text-medical-green-600 cursor-default px-6'
-                                                        : isTesting
-                                                            ? 'bg-medical-green-100 text-medical-green-700 cursor-default'
-                                                            : 'bg-white border border-slate-200 text-slate-500 hover:border-medical-green-500 hover:text-medical-green-600 hover:bg-medical-green-50 shadow-sm'
+                                                disabled={summarizedCardIds.includes(block.id) || chatLoading}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed ${
+                                                    summarizedCardIds.includes(block.id)
+                                                        ? 'bg-amber-100 border border-amber-200 text-amber-600 cursor-default'
+                                                        : 'bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 hover:border-amber-300'
                                                 }`}
                                             >
-                                                <CheckCircle size={14} className={isCompleted || isTesting ? 'hidden' : 'text-slate-400'} />
-                                                {isCompleted ? 'Completado' : isTesting ? 'En Test...' : 'Hacer Test'}
+                                                <Brain size={14} className="text-amber-500" />
+                                                {summarizedCardIds.includes(block.id) ? '✓ Resumido' : 'Resumir'}
+                                            </button>
+
+                                            {/* Botón Subrayar - modo manual */}
+                                            {(() => {
+                                                const isModeActive = highlightModeCardId === block.id;
+                                                const hasHighlights = (cardHighlights[block.id]?.length || 0) > 0;
+                                                return (
+                                                    <button
+                                                        onClick={() => handleHighlightToggle(block)}
+                                                        title={isModeActive ? 'Clic: desactivar modo. Ctrl+Clic sobre texto para borrar subrayado.' : 'Activar subrayador manual'}
+                                                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm ${
+                                                            isModeActive
+                                                                ? 'bg-yellow-400 border border-yellow-500 text-yellow-900 ring-2 ring-yellow-300 ring-offset-1'
+                                                                : hasHighlights
+                                                                    ? 'bg-yellow-100 border border-yellow-300 text-yellow-800 hover:bg-yellow-200'
+                                                                    : 'bg-white border border-slate-200 text-slate-500 hover:border-yellow-400 hover:text-yellow-700 hover:bg-yellow-50'
+                                                        }`}
+                                                    >
+                                                        <Highlighter size={14} className={isModeActive ? 'text-yellow-800 animate-pulse' : hasHighlights ? 'text-yellow-600' : 'text-slate-400'} />
+                                                        {isModeActive ? 'Subrayando...' : hasHighlights ? 'Subrayado ✓' : 'Subrayar'}
+                                                    </button>
+                                                );
+                                            })()}
+
+                                            {/* Botón Hacer Test / Continuar Test */}
+                                            <button
+                                                onClick={() => handleTestClick(block)}
+                                                disabled={isCompleted || chatLoading}
+                                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all shadow-sm disabled:opacity-40 disabled:cursor-not-allowed ${
+                                                    isCompleted
+                                                        ? 'bg-medical-green-200 text-medical-green-700 cursor-default'
+                                                        : isTesting
+                                                            ? 'bg-blue-100 border border-blue-300 text-blue-700 hover:bg-blue-200 animate-pulse-subtle'
+                                                            : 'bg-white border border-slate-200 text-slate-500 hover:border-medical-green-500 hover:text-medical-green-600 hover:bg-medical-green-50'
+                                                }`}
+                                            >
+                                                {isCompleted
+                                                    ? <><CheckCircle size={14} className="text-medical-green-600" /> Completado</>
+                                                    : isTesting
+                                                        ? <><ClipboardList size={14} className="text-blue-600" /> Continuar Test</>
+                                                        : <><ClipboardList size={14} className="text-slate-400" /> Hacer Test</>
+                                                }
                                             </button>
                                         </div>
                                     )}
                                 </div>
 
+
                                 {/* Card Body */}
-                                <div className="px-8 md:px-12 py-10 md:py-14">
+                                <div
+                                    className="px-8 md:px-12 py-10 md:py-14"
+                                    onMouseUp={(e) => handleContentMouseUp(block, e)}
+                                    style={{ cursor: highlightModeCardId === block.id ? 'text' : 'auto' }}
+                                >
+                                    {highlightModeCardId === block.id && (
+                                        <div className="mb-4 flex items-center gap-2 text-[11px] text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-xl px-4 py-2">
+                                            <Highlighter size={12} className="text-yellow-500 animate-pulse" />
+                                            <span><strong>Modo subrayado activo.</strong> Arrastra para subrayar. <span className="opacity-60">Ctrl+Clic sobre texto seleccionado para borrar ese subrayado.</span></span>
+                                        </div>
+                                    )}
                                     <div className="prose prose-slate max-w-none 
                                         prose-p:text-slate-600 prose-p:leading-relaxed prose-p:mb-6 prose-p:text-[1.05rem]
                                         prose-strong:text-slate-900 prose-strong:font-bold
@@ -388,12 +507,15 @@ Recuerda: NO TE SALGAS DE ESTE TEXTO Y RESPONDE SIEMPRE EN ESPAÑOL.`;
                                                     .preview-container .prose th { background: #f8fafc; padding: 10px 14px; text-align: left; font-size: 0.7rem; text-transform: uppercase; color: #64748b; border: 1px solid #e2e8f0; }
                                                     .preview-container .prose td { padding: 10px 14px; border: 1px solid #e2e8f0; font-size: 0.85rem; color: #475569; }
                                                 `}} />
-                                                <div className="prose max-w-none">
+                                                <div
+                                                    className="prose max-w-none"
+                                                    ref={el => { contentRefs.current[block.id] = el; }}
+                                                >
                                                     <ReactMarkdown 
                                                         remarkPlugins={[remarkGfm, remarkBreaks]}
                                                         rehypePlugins={[rehypeRaw]}
                                                     >
-                                                        {highlightContent(block.contenido, activeHighlightCardId === block.id ? highlights : [])}
+                                                        {block.contenido}
                                                     </ReactMarkdown>
                                                 </div>
                                             </div>

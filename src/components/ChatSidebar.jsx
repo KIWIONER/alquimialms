@@ -56,6 +56,24 @@ const ChatSidebar = ({ unitName, moduleName, unitSlug }) => {
         setTimeout(() => setIsAlerting(false), 5000);
     };
 
+    // Normaliza el texto de la IA para que Markdown lo estructure correctamente.
+    // El problema: la IA devuelve saltos de línea simples (\n) que Markdown
+    // trata como el mismo párrafo. Necesitamos doblarlos para crear párrafos.
+    const normalizeMarkdown = (text) => {
+        if (!text) return '';
+        return text
+            // Aseguramos que las opciones a) b) c) d) estén cada una en su propia línea
+            .replace(/([^\n])\n([a-d]\))/gi, '$1\n\n$2')
+            // Aseguramos que los items numerados (1. 2. etc) estén en su propia línea
+            .replace(/([^\n])\n(\d+\.)/g, '$1\n\n$2')
+            // Aseguramos que las líneas que empiezan con ** (negrita/título) tengan salto doble
+            .replace(/([^\n])\n(\*\*[^*])/g, '$1\n\n$2')
+            // Aseguramos que "Pregunta X/5:" empiece con salto doble
+            .replace(/([^\n])\n(Pregunta\s+\d)/gi, '$1\n\n$2')
+            // Convertimos saltos simples restantes en dobles para crear párrafos
+            .replace(/([^\n])\n([^\n])/g, '$1\n\n$2');
+    };
+
     const extractOptions = (text) => {
         if (!text) return [];
         const lines = text.split('\n');
@@ -188,12 +206,22 @@ const ChatSidebar = ({ unitName, moduleName, unitSlug }) => {
 
                                         return (
                                             <>
-                                                <div className="prose prose-sm max-w-none prose-slate prose-p:leading-relaxed prose-pre:bg-slate-800 prose-pre:text-slate-100 prose-a:text-medical-green-600 hover:prose-a:text-medical-green-700 prose-strong:text-slate-800 [&_table]:w-full [&_table]:border-collapse [&_th]:border-b-2 [&_th]:border-slate-200 [&_th]:py-2 [&_th]:text-left [&_td]:border-b [&_td]:border-slate-100 [&_td]:py-2 [&_tr:last-child_td]:border-b-0 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2">
+                                                <div className="prose prose-sm max-w-none prose-slate 
+                                                    prose-p:leading-relaxed prose-p:mb-3 prose-p:mt-0
+                                                    prose-strong:text-slate-900 prose-strong:font-bold
+                                                    prose-ul:my-2 prose-ul:pl-4 prose-li:my-1
+                                                    prose-ol:my-2 prose-ol:pl-4
+                                                    prose-pre:bg-slate-800 prose-pre:text-slate-100 prose-pre:rounded-xl
+                                                    prose-a:text-medical-green-600 
+                                                    [&_table]:w-full [&_table]:border-collapse [&_table]:text-xs
+                                                    [&_th]:border-b-2 [&_th]:border-slate-200 [&_th]:py-2 [&_th]:text-left [&_th]:pr-4
+                                                    [&_td]:border-b [&_td]:border-slate-100 [&_td]:py-1.5 [&_td]:pr-4
+                                                ">
                                                     <ReactMarkdown
                                                         remarkPlugins={[remarkGfm, remarkBreaks]}
                                                         rehypePlugins={[rehypeRaw]}
                                                     >
-                                                        {displayContent}
+                                                        {normalizeMarkdown(displayContent)}
                                                     </ReactMarkdown>
                                                 </div>
                                                 
