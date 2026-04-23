@@ -105,19 +105,25 @@ const LessonContentViewer = ({ docId, unitName, moduleName }) => {
     };
 
     const handleSummaryClick = async (block) => {
-        const prompt = `¡Hola Cerebro! Por favor, haz un resumen magistral, técnico y muy conciso de esta tarjeta titulada "${block.titulo}". 
-        
-        Tu objetivo es:
-        1. Resumir lo esencial en 2 o 3 párrafos pedagógicos.
-        2. OBLIGATORIO: Identificar y listar TODAS las frases literales clave para el sistema de subrayado [[REFS]].
-        
-        Contenido de la tarjeta:
-        ${block.contenido}`;
-
-        // Limpiamos cualquier estado de test previo para que la IA no se confunda
+        // Bloqueamos cualquier interacción previa para que la IA se resetee
         setTestActive(false);
 
-        // Enviamos en modo oculto (isHidden) para que el alumno vea solo el aviso y luego la respuesta
+        const prompt = `[ORDEN DE AISLAMIENTO ABSOLUTO - NO REVISES OTRAS TARJETAS]
+¡Hola Cerebro! Olvida cualquier pregunta, test o tema anterior. Céntrate ÚNICAMENTE en la tarjeta con ID "${block.id}" titulada "${block.titulo}".
+
+TU TAREA:
+1. Haz un resumen magistral y denso del texto que te proporciono abajo.
+2. TRAZABILIDAD MÁXIMA (OBLIGATORIO): Debes identificar al menos entre 10 y 15 frases literales EXACTAS del texto de abajo para el sistema [[REFS]]. El alumno quiere ver CASI TODA la tarjeta subrayada en amarillo pastel.
+3. NO uses información general. NO busques en la base de datos. USA SOLAMENTE EL TEXTO SIGUIENTE.
+
+TEXTO DE LA TARJETA "${block.titulo}":
+"""
+${block.contenido}
+"""
+
+REPRODUCE EL TEXTO RESUMIDO Y FINALIZA CON EL TAG [[REFS: frase 1 | frase 2 | ... | frase 15]]`;
+
+        // Enviamos en modo oculto (isHidden)
         await sendMessage(prompt, {
             current_slug: unitName,
             isHidden: true,
